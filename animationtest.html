@@ -8,7 +8,7 @@
 </head>
 <body>
     <script src = "./lib/d3.js"></script>
-    <script src = "./lib/paper-full.js"></script>
+    <script src = "./lib/paper.js"></script>
     <div>
         <!-- <svg id = "mysvg" width = '800' height = '800'></svg> -->
         <canvas id = "mycanvas" width="800" height="800"></canvas>
@@ -22,6 +22,23 @@
         var cy = 100;
         var r = 10;
         var pathlength = 30;
+
+        // var firstPoint = new paper.Point(5, 10);
+        // var secondPoint = new paper.Point(4, 2);
+        // var result = firstPoint * secondPoint;
+        // console.log(result); // {x: 20, y: 20}
+        // var maxPoint = new paper.Point(100, 100);
+        // var randomPoint = paper.Point.random();
+        // console.log('random', randomPoint)
+        // console.log('maxpoint', maxPoint)
+        // // A point between {x:0, y:0} and {x:100, y:100}:
+        // var destination = maxPoint * randomPoint;
+        // // var maxPoint = new paper.Point(800, 800)
+        // // var random = new paper.Point.random()
+        // // var destination = maxPoint * random;
+        // console.log('dedtination', destination)
+
+        var destination = new paper.Point(214, 692);
 
         var circle = new paper.Path.Circle(new paper.Point(cx, cy), r);
         // var path1 = new paper.Path.Circle(new paper.Point(20, 20), 30);
@@ -37,6 +54,21 @@
         var segmentlength = pathlength / amount
         for (var i = 0; i < amount; i++){
             path.add(new paper.Point(cx, cy+r+segmentlength*i))
+        }
+
+        
+
+        function onFrame(event){
+            for(var i = 0; i< amount; i++){
+                var segment = path.segments[i]
+                if(i == 0){
+                    segment.point.x = cx;
+                    segment.point.y = cy;
+                }
+                else{
+                    segment.point = path.segments[i-1]
+                }
+            }
         }
         // path.selected = true;
         // path.style = {
