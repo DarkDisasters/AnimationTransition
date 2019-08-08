@@ -8,20 +8,53 @@
 </head>
 <body>
     <script src = "./lib/d3.js"></script>
+    <script src = "./lib/paper-full.js"></script>
     <div>
-        <svg id = "mysvg" width = '800' height = '800'></svg>
+        <!-- <svg id = "mysvg" width = '800' height = '800'></svg> -->
+        <canvas id = "mycanvas" width="800" height="800"></canvas>
     </div>
     <script>
-        var svg = d3.select('svg')
+        var canvas = document.getElementById("mycanvas");
+        paper.setup(canvas);
 
-        var g1 = svg.append('g')
-                    .attr('class', 'group1')
+        var amount = 10;
+        var cx = 100;
+        var cy = 100;
+        var r = 10;
+        var pathlength = 30;
 
-        var circle = g1.append('circle')
-                        .attr('cx', 200)
-                        .attr('cy', 200)
-                        .attr('r', 20)
-                        .style('fill', 'steelblue')
+        var circle = new paper.Path.Circle(new paper.Point(cx, cy), r);
+        // var path1 = new paper.Path.Circle(new paper.Point(20, 20), 30);
+        circle.fillColor = 'red';
+        // var path = new paper.Path(new paper.Point(100,110), new paper.Point(100, 130));
+        var path = new paper.Path({
+            // strokeColor: [0.9],
+            strokeColor: 'black',
+            strokeWidth: 3,
+            strokeCap: 'square'
+        })
+
+        var segmentlength = pathlength / amount
+        for (var i = 0; i < amount; i++){
+            path.add(new paper.Point(cx, cy+r+segmentlength*i))
+        }
+        // path.selected = true;
+        // path.style = {
+        //     strokeColor: 'black',
+        //     strokeWidth: 3,
+        // };
+        // var svg = d3.select('svg')
+
+        // var g1 = svg.append('g')
+        //             .attr('class', 'group1')
+
+        // var circle = g1.append('circle')
+        //                 .attr('cx', 200)
+        //                 .attr('cy', 200)
+        //                 .attr('r', 20)
+        //                 .style('fill', 'steelblue')
+        
+        // var tail = g1.append('')
         
 
     </script>
