@@ -39,6 +39,7 @@
         // console.log('dedtination', destination)
 
         var destination = new paper.Point(214, 692);
+        
 
         var circle = new paper.Path.Circle(new paper.Point(cx, cy), r);
         // var path1 = new paper.Path.Circle(new paper.Point(20, 20), 30);
@@ -56,7 +57,11 @@
             path.add(new paper.Point(cx, cy+r+segmentlength*i))
         }
 
-        
+        var pathTransition = new paper.Path(new paper.Point(cx,cy), destination)
+        var transitionsegments = pathTransition.segments;
+        console.log("transitionsegment", transitionsegments)
+        transitionsegments.interpolate(transitionsegments[0],transitionsegments[1], 10)
+        pathTransition.selected = true;
 
         function onFrame(event){
             for(var i = 0; i< amount; i++){
