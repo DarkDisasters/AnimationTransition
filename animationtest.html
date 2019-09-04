@@ -39,7 +39,10 @@
         // console.log('dedtination', destination)
 
         var destination = new paper.Point(214, 692);
-        
+        var originObject = {'x':cx, 'y':cy}
+        var destinationObject = {'x':214, 'y':692}
+        console.log('origin', originObject)
+
 
         var circle = new paper.Path.Circle(new paper.Point(cx, cy), r);
         // var path1 = new paper.Path.Circle(new paper.Point(20, 20), 30);
@@ -48,7 +51,7 @@
         var path = new paper.Path({
             // strokeColor: [0.9],
             strokeColor: 'black',
-            strokeWidth: 3,
+            // strokeWidth: 3,
             strokeCap: 'square'
         })
 
@@ -57,18 +60,46 @@
             path.add(new paper.Point(cx, cy+r+segmentlength*i))
         }
 
-        var pathTransition = new paper.Path(new paper.Point(cx,cy), destination)
+        var interpolatePoint = d3.interpolateObject(originObject, destinationObject)
+        console.log('interpolate', interpolatePoint(0.1))
+        var transitionPoint = []
+        var pathTransition = new paper.Path()
+        for(var i = 0.0; i < 1; i=i+0.1){
+            var point = {}
+            point.x = interpolatePoint(i).x
+            point.y = interpolatePoint(i).y
+            transitionPoint.push(point)
+            pathTransition.add(new paper.Point(point.x, point.y))
+        }
+        
+        console.log('transitionpoint', transitionPoint)
+
+        
+        
+
         var transitionsegments = pathTransition.segments;
         console.log("transitionsegment", transitionsegments)
-        transitionsegments.interpolate(transitionsegments[0],transitionsegments[1], 10)
+        // transitionsegments.interpolate(transitionsegments[0],transitionsegments[1], 10)
+        // pathTransition.interpolate(transitionsegments[0],transitionsegments[1], 10)
+        
         pathTransition.selected = true;
 
-        function onFrame(event){
+        console.log('pathsegments', path.segments)
+
+        path.tween(
+            
+        )
+
+        var tool1 = new paper.Tool()
+
+        tool1.onFrame = function(event){
             for(var i = 0; i< amount; i++){
+                var tx = transitionsegments[i].point.x
+                var ty = transitionsegments[i].point.y
                 var segment = path.segments[i]
                 if(i == 0){
-                    segment.point.x = cx;
-                    segment.point.y = cy;
+                    segment.point.x = tx;
+                    segment.point.y = ty;
                 }
                 else{
                     segment.point = path.segments[i-1]
