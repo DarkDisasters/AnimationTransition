@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <script src = "./lib/jquery.js"></script>
+    <script src = "./lib/d3.js"></script>
+    <script src = "./lib/paper-full.js "></script>
+</head>
+<body>
+
+    <canvas id = "mycanvas" width = "800" height="800">
+    </canvas>
+
+    <input type="button" value="生成path" onclick="getPath()">
+    <input type="button" value="移动" onclick="startAnimate()">
+    <script>
+        var canvas = document.getElementsByTagName("canvas")[0];
+
+        paper.setup(canvas);
+        paper.install(window);
+        var r = 5
+        var pathp = []
+        var pathPoints = []
+        
+        function getPath(){
+            var path;
+            var tool1 = new Tool()
+            tool1.minDistance = 10;
+
+            tool1.onMouseDown = function(event){
+            // function onMouseDown(event){
+                if (path){
+                    path.selected = false;
+                }
+
+                path = new paper.Path();
+                path.strokeColor = 'black'
+                path.fullySelected = true;
+            }
+
+            tool1.onMouseDrag = function(event){
+                path.add(event.point)
+                pathPoints.push(event.point)
+                
+            }
+
+            tool1.onMouseUp = function(event){
+                var segmentCount = path.segments.length;
+                // path.smooth();
+                console.log('path', path.segments)
+                console.log('pathpoints', pathPoints)
+                path.fullySelected = true;
+                var newSegmentCount = path.segments.length;
+                var difference = segmentCount - newSegmentCount;
+                var percentage = 100 - Math.round(newSegmentCount / segmentCount * 100)
+
+            }
+
+        }
+
+        function startAnimate(){
+            var circle = new paper.Path.Circle(new paper.Point(pathPoints[0].x, pathPoints[0].y), r);
+            circle.fillColor = 'red';
+
+            var tool2 = new Tool();
+            var i = 1;
+            view.onFrame = function(event){
+                console.log('aaaaaa')
+                if(i == pathPoints.length){
+                    circle.position.x = pathPoints[i-1].x;
+                    circle.position.y = pathPoints[i-1].y;
+                }
+                else{
+                    circle.position.x = pathPoints[i].x;
+                    circle.position.y = pathPoints[i].y;
+                    i++;
+                }
+                
+            }
+
+        }
+    </script>
+   
+</body>
+</html>
