@@ -38,7 +38,7 @@
                 }
 
                 path = new paper.Path();
-                path.strokeColor = 'black'
+                // path.strokeColor = 'black'
                 // path.fullySelected = true;
             }
 
@@ -70,7 +70,7 @@
 
         function startAnimate(){
             var length = pathPoints.length
-            var colorRange = ['#ffffff','#d7191c', '#1a9641', '#a6d96a', '#ffffff'] //['#ffffcc', '#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
+            var colorRange = ['#253494', '#d7191c', '#1a9641', '#a6d96a', '#ffffcc'] //['#ffffcc', '#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
             var colorScale = d3.scaleLinear().range(colorRange).domain([0,length/2-length/4,length/2,length/2+length/4,pathPoints.length-1]);
             var amount = 3
             var circle = new paper.Path.Circle(new paper.Point(pathPoints[0].x, pathPoints[0].y), r);
@@ -105,6 +105,7 @@
                             tail.smooth({type: 'continuous'})
                             colorArray.push(colorScale(j))
                         }
+                        colorArray.push('#ffffff')
                         // for(var j = 0; j < amount;i++){
                         //     var segment = tail.segments[j];
                         //     var nextSegment = segment.next;
@@ -127,6 +128,7 @@
                             // colorArray.push(cScale(j))
                             colorArray.push(colorScale(j))
                         }
+                        colorArray.push('#ffffff')
                         tail.strokeColor = {
                             gradient:{
                                 stops: colorArray,
