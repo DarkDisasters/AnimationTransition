@@ -39,7 +39,7 @@
 
                 path = new paper.Path();
                 // path.strokeColor = 'black'
-                // path.fullySelected = true;
+                path.fullySelected = true;
             }
 
             tool1.onMouseDrag = function(event){
@@ -62,6 +62,12 @@
             }
 
         }
+        
+        function addOrDelete(currentlength){
+            if(currentlength < vectorlength){
+
+            }
+        }
 
         function pointsubstract(pointA, pointB){
             var substractPoint = new paper.Point(pointA.x-pointB.x, pointA.y - pointB.y)
@@ -73,19 +79,58 @@
             var colorRange = ['#253494', '#d7191c', '#1a9641', '#a6d96a', '#ffffcc'] //['#ffffcc', '#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
             var colorScale = d3.scaleLinear().range(colorRange).domain([0,length/2-length/4,length/2,length/2+length/4,pathPoints.length-1]);
             var amount = 3
+            var vectorlength = 5
+            var stopflag = 0
             var circle = new paper.Path.Circle(new paper.Point(pathPoints[0].x, pathPoints[0].y), r);
             circle.fillColor = 'red';
 
             var tool2 = new Tool();
             var i = 1;
             var tailArray = []
+
+            //
+            function addTail(liPos, curveBool){
+                var colorArray = []
+                //b-zeir
+                circle.position.x = liPos[0].x
+                circle.position.y = liPos[0].y
+                var tail = new paper.Path()
+                tail.add(new paper.Point(liPos[0].x, liPos[0].y))
+                for(var i = 1; i < liPos.length; i++){
+                    var point = new paper.Point(liPos[i].x, liPos[i].y)
+                    var beforePoint = tail.segments[i-1].point
+                    var vector = pointsubstract(beforePoint, point)
+                    var nextPoint = pointsubstract(beforePoint, vector)
+                    tail.add(newPoint)
+                    tail.smooth({type: 'continuous'})
+                    colorArray.push(colorScale(j))
+                }
+
+                tail.strokeColor = {
+                    gradient:{
+                        stops: colorArray,
+                    },
+                    origin: tail.segments[0].point,
+                    destination: tail.segments[amount].point
+                }
+                
+                tail.strokeWidth = 5
+                tail.strokeJoin = 'round'
+                tail.strokeCap = 'round'
+                // tail.smooth()
+                tailArray.push(tail)
+            }
+
             view.onFrame = function(event){
                 if(event.count > 8 && event.count % 8 == 1){
                     
                     if (i > 1){
                         tailArray[0].remove()
                         tailArray.shift()
+                        stopflag = 0
                     }
+
+                    
                    
                     var colorArray = []
                     var tail = new paper.Path()
@@ -99,7 +144,8 @@
                             var point = new paper.Point(pathPoints[j].x, pathPoints[j].y)
                             var beforePoint = tail.segments[tail.segments.length-1].point
                             var vector = pointsubstract(beforePoint, point)
-                            vector.length = 10;
+                            // addOrDelete(vector.length)
+                            vector.length = 5;
                             var nextPoint = pointsubstract(beforePoint,vector)
                             tail.add(nextPoint)
                             tail.smooth({type: 'continuous'})
