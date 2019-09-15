@@ -72,7 +72,7 @@
         }
 
 // speed: 1-20   20-----1s = (21-20)*0.01*100      1-----20s = (21-1)*0.01*100
-        function addTail(liPos, curveBool, speed, event){
+        function addTail(liPos, curveBool, speed){
                 //b-zeir
             var cScale = d3.scaleOrdinal(d3.schemeCategory10)
             var tail = new paper.Path()
@@ -90,48 +90,43 @@
             var count = 0
             var speedHandler = (21-speed)*0.01
 
-            //view.onFrame = function(event){
-                var colorArray = []
-                if(Math.floor(event.time*100) % (speedHandler*100) == 0){
-                // if(event.count > speedHandler && event.count % speedHandler == 1){
-                    count ++
-                    console.log('time', event.time)
-                    if(count == 1)  console.log('framepoint', liPos)
-                    var cLinear = d3.scaleLinear().range(['red', 'green','blue']).domain([0,25,50])
-
-                    //if(count > 100){
-                    if(count > 50){
-                        colorArray = ['#ffffff','#ffffff']
-                    }
-                    else{
-                        for(var i = 0; i < tail.segments.length-1; i++){
-                            if(count-i >= 0){
-                                colorArray.push(cLinear(count-i))
-                            }
-                        }
-                        colorArray.push('#ffffff')
-                    }
-                    
-                    tail.strokeColor = {
-                        gradient:{
-                            stops: colorArray,
-                        },
-                        origin: tail.segments[0].point,
-                        destination: tail.segments[tail.segments.length-1].point
-                    }
-                    // tail.strokeColor = cScale(event.count)
-                    if(count > 50) tail.visible = false
-                }
-
-            //}
-            
             tail.strokeWidth = 4
             tail.strokeJoin = 'round'
             tail.strokeCap = 'round'
             if(curveBool === true){
                 tail.smooth()
             }
-            //tailArray.push(tail)
+
+            var interval = setInterval(function(){
+                var colorArray = []
+                count ++
+
+                var cLinear = d3.scaleLinear().range(['red', 'green','blue']).domain([0,50,100])
+
+                if(count > 100){
+                //if(count > 50){
+                    colorArray = ['#ffffff','#ffffff']
+                }
+                else{
+                    for(var i = 0; i < tail.segments.length-1; i++){
+                        if(count-i >= 0){
+                            colorArray.push(cLinear(count-i))
+                        }
+                    }
+                    colorArray.push('#ffffff')
+                }
+                    
+                tail.strokeColor = {
+                    gradient:{
+                        stops: colorArray,
+                    },
+                    origin: tail.segments[0].point,
+                    destination: tail.segments[tail.segments.length-1].point
+                }
+                // tail.strokeColor = cScale(event.count)
+                if(count > 100) tail.visible = false
+            }, speedHandler*1000)
+            console.log('speedhandler', speedHandler*1000)
         }
 
         function startAnimate(){
@@ -162,56 +157,17 @@
             for(var i = 0; i < pathPoints.length; i++){
                 pathPoints2.push({"x":pathPoints[i].x+50, "y":pathPoints[i].y+50})
             }
-            console.log('pathPoints', pathPoints)
-            console.log('pathpoints2', pathPoints2)
-            colorArray1 = ['#108933','#18A240', '#22B14C', '#ffffff']
-            view.onFrame = function(event){
-            addTail(pathPoints, true, 10, event)
-            addTail(pathPoints2, true, 19, event)
-            }
-            // view.onFrame = function(event){
-                
-            //     if(event.count > 20 && event.count % 20 == 1){
-                    
-            //         if (i > 1){
-            //             tailArray[0].remove()
-            //             tailArray.shift()
-            //             stopflag = 0
-            //         }
-            //         var liPoint = []
-            //         var colorArray = []
-                    
-            //         circle.position.x = pathPoints[i].x
-            //         circle.position.y = pathPoints[i].y
-            //         if(i >= amount){
-            //             liPoint.push(pathPoints[i])
-            //             for(var j = i-1; j >= i-amount; j--){
-            //                 liPoint.push(pathPoints[j])
-            //                 colorArray.push(colorScale(j))
-            //             }
-            //             colorArray.push('#ffffff')
-            //             addTail(liPoint, true, colorArray)
-            //         }
-            //         else{
-            //             for(var j = i; j >= 0; j--){
-            //                 liPoint.push(pathPoints[j])
-            //                 colorArray.push(colorScale(j))
-            //             }
-            //             colorArray.push('#ffffff')
-            //             addTail(liPoint, true, colorArray)
-            //             console.log('colora', colorArray)
-            //         }
-                    
-                    
 
-                    
-            //         i++;
-            //         if(i == pathPoints.length){
-            //             i = i - 1
-            //         }
-            //         // tailArray.push(tail)
-            //     }
-            // }
+            var pathPoints3 = []
+            var circle3 = new paper.Path.Circle(new paper.Point(pathPoints[0].x-60, pathPoints[0].y+60), r);
+            circle3.fillColor = 'red'
+            for(var i = 0; i < pathPoints.length; i++){
+                pathPoints3.push({"x":pathPoints[i].x-60, "y":pathPoints[i].y+60})
+            }
+
+            addTail(pathPoints, true, 10)
+            addTail(pathPoints2, true, 19)
+            addTail(pathPoints3, true, 15)
 
         }
     </script>
