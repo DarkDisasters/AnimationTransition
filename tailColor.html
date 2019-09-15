@@ -23,8 +23,6 @@
         paper.setup(canvas);
         paper.install(window);
         var r = 5
-        var pathp = []
-        var pathPoints = []
         var tailArray = []
         // var colorRange = ['#253494', '#d7191c', '#1a9641', '#a6d96a', '#ffffcc'] //['#ffffcc', '#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
         // var colorScale = d3.scaleLinear().range(colorRange).domain([0,length/2-length/4,length/2,length/2+length/4,pathPoints.length-1]);
@@ -73,8 +71,10 @@
             return substractPoint
         }
 
-        function addTail(liPos, curveBool, colorArray){
+// speed: 1-20   20-----1s = (21-20)*0.01*100      1-----20s = (21-1)*0.01*100
+        function addTail(liPos, curveBool, speed){
                 //b-zeir
+            var cScale = d3.scaleOrdinal(d3.schemeCategory10)
             var tail = new paper.Path()
             tail.add(new paper.Point(liPos[0].x, liPos[0].y))
             for(var i = 1; i < liPos.length; i++){
@@ -85,31 +85,59 @@
                 var nextPoint = pointsubstract(beforePoint, vector)
                 tail.add(nextPoint)
                 // tail.smooth({type: 'continuous'})
-        
+                
             }
+            console.log('liPoint', liPos)
+            var count = 0
+            var speedHandler = (21-speed)*0.01
 
-            tail.strokeColor = {
-                gradient:{
-                    stops: colorArray,
-                },
-                origin: tail.segments[0].point,
-                destination: tail.segments[tail.segments.length-1].point
+            view.onFrame = function(event){
+                var colorArray = []
+                if(Math.floor(event.time*100) % (speedHandler*100) == 0){
+                // if(event.count > speedHandler && event.count % speedHandler == 1){
+                    count ++
+                    if(count == 1)  console.log('framepoint', liPos)
+                    var cLinear = d3.scaleLinear().range(['red', 'green','blue']).domain([0,25,50])
+
+                    //if(count > 100){
+                    if(count > 50){
+                        colorArray = ['#ffffff','#ffffff']
+                    }
+                    else{
+                        for(var i = 0; i < tail.segments.length-1; i++){
+                            if(count-i >= 0){
+                                colorArray.push(cLinear(count-i))
+                            }
+                        }
+                        colorArray.push('#ffffff')
+                    }
+                    
+                    tail.strokeColor = {
+                        gradient:{
+                            stops: colorArray,
+                        },
+                        origin: tail.segments[0].point,
+                        destination: tail.segments[tail.segments.length-1].point
+                    }
+                    // tail.strokeColor = cScale(event.count)
+                    if(count > 50) tail.visible = false
+                }
+
             }
             
-            tail.strokeWidth = 7
+            tail.strokeWidth = 4
             tail.strokeJoin = 'round'
             tail.strokeCap = 'round'
             if(curveBool === true){
                 tail.smooth()
             }
-            tailArray.push(tail)
+            //tailArray.push(tail)
         }
 
         function startAnimate(){
-            var length = pathPoints.length
             
             var colorRange = ['#253494', '#d7191c', '#1a9641', '#a6d96a', '#ffffcc'] //['#ffffcc', '#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
-            var colorScale = d3.scaleLinear().range(colorRange).domain([0,length/2-length/4,length/2,length/2+length/4,pathPoints.length-1]);
+            
             var vectorlength = 5
             var stopflag = 0
            
@@ -117,7 +145,7 @@
             var tool2 = new Tool();
             var i = 1;
 
-            pathPoints = [
+            var pathPoints = [
                 {"x":205, "y":294},
                 {"x":224, "y":297},
                 {"x":267, "y":294},
@@ -128,9 +156,17 @@
             circle.fillColor = 'red';
 
             //
-            
+            var pathPoints2 = []
+            var circle2 = new paper.Path.Circle(new paper.Point(pathPoints[0].x+50, pathPoints[0].y+50), r);
+            circle2.fillColor = 'red'
+            for(var i = 0; i < pathPoints.length; i++){
+                pathPoints2.push({"x":pathPoints[i].x+50, "y":pathPoints[i].y+50})
+            }
+            console.log('pathPoints', pathPoints)
+            console.log('pathpoints2', pathPoints2)
             colorArray1 = ['#108933','#18A240', '#22B14C', '#ffffff']
-            addTail(pathPoints, true, colorArray1)
+            addTail(pathPoints, true, 10)
+            addTail(pathPoints2, true, 19)
             
             // view.onFrame = function(event){
                 
