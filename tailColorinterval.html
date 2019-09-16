@@ -97,7 +97,7 @@
                 tail.smooth()
             }
 
-            var interval = setInterval(function(){
+            var colorInterval = setInterval(function(){
                 var colorArray = []
                 count ++
 
@@ -124,7 +124,11 @@
                     destination: tail.segments[tail.segments.length-1].point
                 }
                 // tail.strokeColor = cScale(event.count)
-                if(count > 100) tail.visible = false
+                //if(count > 100) tail.visible = false
+                if(count > 100){
+                    tail.visible = false
+                    clearInterval(colorInterval)
+                } 
             }, speedHandler*1000)
             console.log('speedhandler', speedHandler*1000)
         }
