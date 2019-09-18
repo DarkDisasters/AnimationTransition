@@ -72,7 +72,7 @@
         }
 
 // speed: 1-20   20-----1s = (21-20)*0.01*100      1-----20s = (21-1)*0.01*100
-        function addTail(liPos, curveBool, speed){
+        function addTail(liPos, curveBool, tailwidth, tailbrightness, speed){
                 //b-zeir
             var cScale = d3.scaleOrdinal(d3.schemeCategory10)
             var tail = new paper.Path()
@@ -87,10 +87,13 @@
                 // tail.smooth({type: 'continuous'})
                 
             }
+            
+            project.activeLayer.insertChild(0, tail);
+
             var count = 0
             var speedHandler = (21-speed)*0.01
 
-            tail.strokeWidth = 4
+            tail.strokeWidth = tailwidth
             tail.strokeJoin = 'round'
             tail.strokeCap = 'round'
             if(curveBool === true){
@@ -110,7 +113,9 @@
                 else{
                     for(var i = 0; i < tail.segments.length-1; i++){
                         if(count-i >= 0){
-                            colorArray.push(cLinear(count-i))
+                            var currentColor = new paper.Color(cLinear(count-i))
+                            currentColor.brightness = tailbrightness
+                            colorArray.push(currentColor)
                         }
                     }
                     colorArray.push('#ffffff')
@@ -123,8 +128,12 @@
                     origin: tail.segments[0].point,
                     destination: tail.segments[tail.segments.length-1].point
                 }
-                // tail.strokeColor = cScale(event.count)
-                //if(count > 100) tail.visible = false
+
+                // tail.strokeColor.brightness =  1
+                if(count == 2){
+                    console.log('strokecolor', tail.strokeColor)
+                }
+                
                 if(count > 100){
                     tail.visible = false
                     clearInterval(colorInterval)
@@ -153,11 +162,12 @@
 
             var circle = new paper.Path.Circle(new paper.Point(pathPoints[0].x, pathPoints[0].y), r);
             circle.fillColor = 'red';
-
+            project.activeLayer.insertChild(1, circle)
             //
             var pathPoints2 = []
             var circle2 = new paper.Path.Circle(new paper.Point(pathPoints[0].x+50, pathPoints[0].y+50), r);
             circle2.fillColor = 'red'
+            project.activeLayer.insertChild(3, circle2)
             for(var i = 0; i < pathPoints.length; i++){
                 pathPoints2.push({"x":pathPoints[i].x+50, "y":pathPoints[i].y+50})
             }
@@ -165,13 +175,14 @@
             var pathPoints3 = []
             var circle3 = new paper.Path.Circle(new paper.Point(pathPoints[0].x-60, pathPoints[0].y+60), r);
             circle3.fillColor = 'red'
+            project.activeLayer.insertChild(1, circle3)
             for(var i = 0; i < pathPoints.length; i++){
                 pathPoints3.push({"x":pathPoints[i].x-60, "y":pathPoints[i].y+60})
             }
 
-            addTail(pathPoints, true, 10)
-            addTail(pathPoints2, true, 19)
-            addTail(pathPoints3, true, 15)
+            addTail(pathPoints, true, 3, 1, 10)
+            addTail(pathPoints2, true, 7, 0.7, 19)
+            addTail(pathPoints3, true, 5, 0.5, 15)
 
         }
     </script>
