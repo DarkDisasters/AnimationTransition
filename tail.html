@@ -108,7 +108,30 @@
             
             // var cLinear = d3.scaleLinear().range(['#0000FF', '#56C1F0' , '#FBFEFF']).domain([0,100])
             // // var precolor = cLinear(speed)
-            var curLinear = d3.scaleLinear().range(['#0000FF', '#73CCF3', '#FBFEFF']).domain([0, 100-speed, 100])
+            // var curLinear = d3.scaleLinear().range(['#0000FF', '#73CCF3', '#FBFEFF']).domain([0, 100-speed, 100])
+            var prehalf = Math.floor((100 - speed)/2)
+            var lasthalf = Math.floor(100 - speed/2)
+            // var domaincolor = new paper.Color('#0070C0')
+            var domaincolor = d3.color('#0070C0')
+            var scalecolorArray = []
+            var scalecolorAlpha = [0.25,0.4,0.8,0.95]
+
+            scalecolorArray.push(domaincolor)
+            for(var i = 0; i < 4; i++){
+                var middlecolor = d3.color('#0070C0')
+                // middlecolor.alpha = 1 - scalecolorAlpha[i]
+                middlecolor.opacity = 1 - scalecolorAlpha[i]
+                scalecolorArray.push(middlecolor)
+            }
+            console.log('scalearray', scalecolorArray)
+
+            // var middlecolor = domaincolor
+            // var prehalfcolor = domaincolor
+            // var lasthalfcolor = domaincolor
+            // var lasthalfcolor = domaincolor
+            // precolor.alpha = 0.4
+            // lastcolor.alpha = 0.05
+            var curLinear = d3.scaleLinear().range(scalecolorArray).domain([0, prehalf, 100-speed, lasthalf, 100])
             // if(count > 100){
             // //if(count > 50){
             //     colorArray = ['#ffffff','#ffffff']
@@ -125,10 +148,13 @@
             // }
             
             for(var i = 0; i < 100; i++){
-                var currentColor = new paper.Color(curLinear(i)).convert('hsl')
+
+                var currentColor = curLinear(i)
                 // currentColor.lightness = tailbrightness
                 colorArray.push(currentColor)
             }
+            
+            // console.log('colro', colorArray)
 
             tail.strokeColor = {
                 gradient:{
@@ -188,7 +214,7 @@
                 pathPoints3.push({"x":pathPoints[i].x-60, "y":pathPoints[i].y+60})
             }
 
-            addTail(pathPoints, true, 3, 90)
+            addTail(pathPoints, true, 3, 80)
             addTail(pathPoints2, true, 7, 50)
             addTail(pathPoints3, true, 5, 10)
 
