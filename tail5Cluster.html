@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <script src = "./lib/jquery.js"></script>
+    <script src = "./lib/d3.js"></script>
+    <script src = "./lib/paper-full.js "></script>
+</head>
+<body>
+
+    <canvas id = "mycanvas" width = "800" height="800">
+    </canvas>
+
+    <input type="button" value="生成path" onclick="getPath()">
+    <input type="button" value="移动" onclick="startAnimate()">
+    <script>
+        var canvas = document.getElementsByTagName("canvas")[0];
+
+        paper.setup(canvas);
+        paper.install(window);
+        var r = 5
+        var tailArray = []
+        var amount = 3
+        // tailData = [[{lipos:[{x,y},{x,y}..]}, {lipos:[{x,y},{x,y}..]}], []]
+        var tailData = []
+        
+        
+        function obtaindata(){
+            $.getJSON('./tailData/5cluster_3.json', function(data){
+                var circleDots = data['dots']
+                console.log(circleDots)
+                for(classNumber in circleDots){
+                    var curClassPoint = []
+                    var curPoints = circleDots[classNumber]
+                    for(var i = 0; i < curPoints.length; i++){
+                        var gapYArray = [-3, 1, -1]
+                        var gapXArray = [-8, -13, -19]
+                        var tailInfor = {}
+                        // tailInfor['class'] = classNumber
+                        tailInfor['lipos'] = []
+                        for(var j=-1; j<3; j++){
+                            if (j==-1){
+                                tailInfor['lipos'].push(curPoints[i])
+                            }else{
+                                var point = {}
+                                point.x = curPoints[i].x + gapXArray[j]
+                                point.y = curPoints[i].y + gapYArray[j]
+                                tailInfor['lipos'].push(point)
+                            }
+                        }
+                        curClassPoint.push(tailInfor)
+                    }
+                    tailData.push(curClassPoint)
+                }
+                
+            })
+        }
+
+        obtaindata()
+
+        function pointsubstract(pointA, pointB){
+            var substractPoint = new paper.Point(pointA.x-pointB.x, pointA.y - pointB.y)
+            return substractPoint
+        }
+
+// speed: 1-20   20-----1s = (21-20)*0.01*100      1-----20s = (21-1)*0.01*100
+        function addTail(liPos, curveBool, tailwidth, speed, color){
+                //b-zeir
+            var cScale = d3.scaleOrdinal(d3.schemeCategory10)
+            var tail = new paper.Path()
+            tail.add(new paper.Point(liPos[0].x, liPos[0].y))
+            for(var i = 1; i < liPos.length; i++){
+                // console.log('ddddddddddddd')
+                var point = new paper.Point(liPos[i].x, liPos[i].y)
+                var beforePoint = tail.segments[i-1].point
+                var vector = pointsubstract(beforePoint, point)
+                var nextPoint = pointsubstract(beforePoint, vector)
+                tail.add(nextPoint)
+            }
+            
+            project.activeLayer.insertChild(0, tail);
+
+            var count = 0
+
+            tail.strokeWidth = tailwidth
+            tail.strokeJoin = 'round'
+            tail.strokeCap = 'round'
+            if(curveBool === true){
+                tail.smooth()
+            }
+
+            var colorArray = []
+            count ++
+
+            var prehalf = Math.floor((100 - speed)/2)
+            var lasthalf = Math.floor(100 - speed/2)
+            var domaincolor = d3.color(color)
+            var scalecolorArray = []
+            var scalecolorAlpha = [0.25,0.4,0.8,0.95]
+
+            scalecolorArray.push(domaincolor)
+            for(var i = 0; i < 4; i++){
+                var middlecolor = d3.color(color)
+                middlecolor.opacity = 1 - scalecolorAlpha[i]
+                scalecolorArray.push(middlecolor)
+            }
+
+            var curLinear = d3.scaleLinear().range(scalecolorArray).domain([0, prehalf, 100-speed, lasthalf, 100])
+            
+            for(var i = 0; i < 100; i++){
+                var currentColor = curLinear(i)
+                colorArray.push(currentColor)
+            }
+            
+            tail.strokeColor = {
+                gradient:{
+                    stops: colorArray,
+                },
+                origin: tail.segments[0].point,
+                destination: tail.segments[tail.segments.length-1].point
+            }     
+        }
+
+        function drawCircle(dot){
+            console.log(dot)
+            var circle = new paper.Path.Circle(new paper.Point(dot.x, dot.y))
+            circle.fillColor = 'red'
+            project.activeLayer.insertChild(1, circle)
+        }
+
+        function startAnimate(){
+            console.log('taildata', tailData)
+            var colorRange = ['#253494', '#d7191c', '#1a9641', '#a6d96a', '#ffffcc'] //['#ffffcc', '#a1dab4', '#41b6c4', '#2c7fb8', '#253494']
+            
+            var vectorlength = 5
+            var stopflag = 0
+           
+
+            var tool2 = new Tool();
+            var i = 1;
+            
+            var liSpeed = [35, 97, 50, 65, 7]
+            var liColor = ['#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B']
+
+            for(var i = 0; i < tailData.length; i++){
+                var curClassDots = tailData[i]
+                for(var j = 0; j < curClassDots.length; j++){
+                    var liPos = curClassDots[j]['lipos']
+                    // console.log('lipos', liPos)
+                    // console.log('lipos0', liPos[0])
+                    drawCircle(liPos[0])
+                    addTail(liPos, true, 3, liSpeed[i], 'black')
+                    // addTail(liPos, true, 3, liSpeed[i], liColor[i])
+                }
+            }
+
+            // var pathPoints = [
+            //     {"x":205, "y":294},
+            //     {"x":224, "y":301},
+            //     {"x":267, "y":297},
+            //     {"x":292, "y":299},
+            // ]
+
+            // var circle = new paper.Path.Circle(new paper.Point(pathPoints[0].x, pathPoints[0].y), r);
+            // circle.fillColor = 'red';
+            // project.activeLayer.insertChild(1, circle)
+            
+            // var pathPoints2 = []
+            // var circle2 = new paper.Path.Circle(new paper.Point(pathPoints[0].x+50, pathPoints[0].y+50), r);
+            // circle2.fillColor = 'red'
+            // project.activeLayer.insertChild(3, circle2)
+            // for(var i = 0; i < pathPoints.length; i++){
+            //     pathPoints2.push({"x":pathPoints[i].x+50, "y":pathPoints[i].y+50})
+            // }
+
+            // var pathPoints3 = []
+            // var circle3 = new paper.Path.Circle(new paper.Point(pathPoints[0].x-60, pathPoints[0].y+60), r);
+            // circle3.fillColor = 'red'
+            // project.activeLayer.insertChild(1, circle3)
+            // for(var i = 0; i < pathPoints.length; i++){
+            //     pathPoints3.push({"x":pathPoints[i].x-60, "y":pathPoints[i].y+60})
+            // }
+
+            // var pathPoints4 = [
+            //     {"x":177, "y":223},
+            //     {"x":224, "y":160},
+            //     {"x":267, "y":254},
+            //     {"x":292, "y":210},
+            // ]
+            // var circle4 = new paper.Path.Circle(new paper.Point(pathPoints4[0].x, pathPoints4[0].y), r);
+            // circle4.fillColor = 'red'
+            // project.activeLayer.insertChild(1, circle4)
+
+            // addTail(pathPoints, true, 3, 80)
+            // addTail(pathPoints2, true, 7, 50)
+            // addTail(pathPoints3, true, 5, 10)
+            // addTail(pathPoints4, false, 4, 10)
+
+        }
+    </script>
+   
+</body>
+</html>
