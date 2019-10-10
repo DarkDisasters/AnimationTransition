@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src = './lib/three.js'></script>
+    <script src = './lib/OrbitControls.js'></script>
+    <script src = './lib/stats.min.js'></script>
+    <script src = './lib/d3.js'></script>
+    <!-- <script src = './lib/dat.gui.min.js'></script> -->
+</head>
+<body onload="draw()">
+    <script>
+
+        var scene;
+        function initScene(){
+            scene = new THREE.Scene()
+        }
+
+        var camera;
+        function initCamera(){
+            //创建透视投影相机，视角45度，画幅比例 宽比高，近平面距离0.1，远平面1000
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000)
+            camera.position.set( 30, 30, 400 );
+            camera.lookAt(0, 0, 0)
+        }
+        
+        var renderer;
+        function initRenderer(){
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            })
+            // renderer.setClearColor(0xb9d3ff,1)
+            renderer.setSize(window.innerWidth, window.innerHeight) //渲染器canvas宽高设为与窗口一致
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement)
+        }
+
+        var stats;
+        function initStats(){
+            stats = new Stats()
+            document.body.appendChild(stats.dom)
+        }
+        
+        var controls;
+        function initControls(){
+            controls = new THREE.OrbitControls(camera, renderer.domElement)
+            // 使动画循环使用时阻尼或自转 意思是否有惯性
+            controls.enableDamping = true;
+            //动态阻尼系数 就是鼠标拖拽旋转灵敏度
+            //controls.dampingFactor = 0.25;
+            //是否可以缩放
+            controls.enableZoom = true;
+            controls.minDistance = 10;
+             //设置相机距离原点的最远距离
+            controls.maxDistance = 600;
+            //是否开启右键拖拽
+            controls.enablePan = true;
+        }
+        
+        var light;
+        function initLight(){
+            // scene.add(new THREE.AmbientLight(0x404040));
+        
+            // light = new THREE.DirectionalLight(0xffffff);
+            // light.position.set(1,1,1);
+            // scene.add(light);
+            scene.add(new THREE.AmbientLight(0x444444));
+
+            light = new THREE.DirectionalLight(0xffffff);
+            light.position.set(0, 0, 10);
+
+            light.castShadow = true;
+            light.shadow.camera.top = 10;
+            light.shadow.camera.bottom = -10;
+            light.shadow.camera.left = -10;
+            light.shadow.camera.right = 10;
+
+            //告诉平行光需要开启阴影投射
+            light.castShadow = true;
+
+            scene.add(light);
+        }
+
+        function generateGradientTexture(speed){
+            // var canvas = document.getElementById('generate_texture')
+            var width=64, height=32; 
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            // var width = canvas.width;
+            // var height = canvas.height;
+            var ctx = canvas.getContext('2d')
+            // ctx.clearRect(0,0,window.width,window.height)
+
+            var gradient = ctx.createLinearGradient(0,0,canvas.width,0)
+            // var gradient = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2)
+            var colorArray = []
+
+            var prehalf = Math.floor((100 - speed)/2)
+            var lasthalf = Math.floor(100 - speed/2)
+            var domaincolor = d3.color('#0070C0')
+            var scalecolorAlpha = [0.25,0.4,0.7,0.95]
+            var scalecolorArray = []
+            var domainArray = [lasthalf, 100-speed, prehalf, 0]
+
+            scalecolorArray.push(domaincolor)
+            var colorLinear = d3.scaleLinear().range([domaincolor, 'white']).domain([0, 100])
+            for(var i = 0; i < scalecolorAlpha.length; i++){
+                var linearColor = colorLinear(scalecolorAlpha[i]*100)
+                scalecolorArray.push(linearColor)
+            }
+            var curLinear = d3.scaleLinear().range(scalecolorArray).domain([0, prehalf, 100-speed, lasthalf, 100])
+
+            for(var i = 0; i <= 1; i=i+0.01){
+                var currentColor = curLinear(i*100)
+                gradient.addColorStop(i, currentColor)
+            }
+
+            ctx.fillStyle = gradient
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+            var texture = new THREE.CanvasTexture(canvas)
+            // texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            // texture.anisotropy = 16     //定义纹理的各向异性
+            // texture.needsUpdate = true;
+            return texture
+        }
+
+        function addTail(liPoint, speed){
+            //add ball
+            var ballGeo = new THREE.SphereGeometry(2, 16, 16)
+            var ballMaterial = new THREE.MeshPhongMaterial({
+                color: 'red',
+            }); 
+            var ball = new THREE.Mesh(ballGeo, ballMaterial)   //网孔(Mesh)是用来承载几何模型的一个对象，可以把材料应用到它上面
+            // ball.geometry.verticesNeedUpdate = true;
+            // ball.geometry.normalsNeedUpdate = true;
+            console.log('point', liPoint[0]['z'])
+            var ballCenter = liPoint[0]
+            ball.position.set(ballCenter['x'], ballCenter['y'], ballCenter['z'])
+            scene.add(ball) 
+
+            var tubePoints = liPoint
+            var gradientTexture = generateGradientTexture(speed)
+            var segments = 64
+            var radius = 1
+            var radialSegments = 48
+            var closed = false
+            var tubeGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tubePoints), segments, radius, radialSegments, closed)
+            var tubeMaterial = new THREE.MeshPhongMaterial({
+                map: gradientTexture
+            }) 
+            var tube = new THREE.Mesh(tubeGeo, tubeMaterial);
+            scene.add(tube)
+        }
+       
+        function initModel(){
+            var helper = new THREE.AxesHelper(50)
+            scene.add(helper)
+
+            var liPoint1 = []
+            liPoint1.push(new THREE.Vector3(0, 0, 0))
+            for(var i = 1; i < 5; i++){
+                var randomX1 = i*2 + Math.round(Math.random()*5)
+                var randomY1 = i*2 + Math.round(Math.random()*6)
+                var randomZ1 = i*2 + Math.round(Math.random()*6) 
+                liPoint1.push(new THREE.Vector3(randomX1,randomY1,randomZ1))
+            }
+
+            addTail(liPoint1, 30)
+
+            var liPoint2 = []
+            for(var i = 0; i < liPoint1.length; i++){
+                var randomX2 = liPoint1[i]['x']+20
+                var randomY2 = liPoint1[i]['y']+20
+                var randomZ2 = liPoint1[i]['z']+20 
+                liPoint2.push(new THREE.Vector3(randomX2,randomY2,randomZ2))
+            }
+            addTail(liPoint2, 90)
+
+            // var planeGeo = new THREE.PlaneGeometry(20,20)
+            // var planeMaterial = new THREE.MeshBasicMaterial({
+            //     color: '#aaaaaa',
+            //     side: THREE.DoubleSide
+            // }) 
+            // var plane = new THREE.Mesh(planeGeo, planeMaterial)
+            // // plane.position.set(0,0,-3) 
+            // scene.add(plane)
+
+
+            
+            
+            
+        }
+
+
+        function render(){
+            renderer.render(scene, camera)
+        }
+
+        function animate(){
+            requestAnimationFrame(animate);
+            controls.update()
+            stats.update()
+           
+            render()
+        }
+        
+        function draw(){
+            initRenderer()
+            initScene()
+            initCamera()
+            initLight()
+            initModel()
+
+            initStats()
+            initControls()
+            animate()            
+        }
+       
+        // addKeyListener()
+    </script>
+    <!-- <canvas id = 'generate_texture' width="64" height="32"></canvas> -->
+</body>
+</html>

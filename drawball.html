@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src = './lib/three.js'></script>
+    <script src = './lib/OrbitControls.js'></script>
+    <!-- <!-- <script src = './lib/stats.min.js'></script> -->
+    <script src = './lib/dat.gui.min.js'></script> -->
+</head>
+<body>
+    <script>
+        var scene = new THREE.Scene()
+        //创建透视投影相机，视角45度，画幅比例 宽比高，近平面距离0.1，远平面1000
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000)
+        camera.position.set( 0, 0, 400 );
+
+
+        var renderer = new THREE.WebGLRenderer()
+        renderer.setClearColor(0xb9d3ff,1)
+        renderer.setSize(window.innerWidth, window.innerHeight) //渲染器canvas宽高设为与窗口一致
+        document.body.appendChild(renderer.domElement)
+
+        var controls = new THREE.OrbitControls(camera)
+        
+        var light;
+        function initLight(){
+            scene.add(new THREE.AmbientLight(0x404040));
+        
+            light = new THREE.DirectionalLight(0xffffff);
+            light.position.set(1,1,1);
+            scene.add(light);
+        }
+
+
+        function initObject(){
+            var geometry = new THREE.SphereGeometry(3, 16, 16)
+            var material = new THREE.MeshLambertMaterial({
+                color:0xffffff,
+                side : THREE.BackSide
+            });  //定义一种材质，显示为线框
+            var ball = new THREE.Mesh(geometry, material)   //网孔(Mesh)是用来承载几何模型的一个对象，可以把材料应用到它上面
+            ball.geometry.verticesNeedUpdate = true;
+            ball.geometry.normalsNeedUpdate = true;
+            scene.add(ball) //把几何模型添加到场景中，对象被添加到原点(0,0,0)坐标。
+
+            var planeGeo = new THREE.PlaneGeometry(20,20)
+            var planeMaterial = new THREE.MeshBasicMaterial({
+                color: '#aaaaaa',
+                side: THREE.DoubleSide
+            }) 
+            var plane = new THREE.Mesh(planeGeo, planeMaterial)
+            plane.position.set(0,0,-3) 
+            scene.add(plane)
+
+            var tubePoints = []
+            var segments = 64
+            var radius = 1
+            var radialSegments = 48
+            var closed = false
+            tubePoints.push(new THREE.Vector3(0, 0, 0))
+            for(var i = 1; i < 5; i++){
+                var randomX = i*2 + Math.round(Math.random()*5)
+                var randomY = i*2 + Math.round(Math.random()*6)
+                var randomZ = i*2 + Math.round(Math.random()*6) 
+                tubePoints.push(new THREE.Vector3(randomX,randomY,randomZ))
+            }
+            console.log('tubepoint', tubePoints)
+            var tubeGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tubePoints), segments, radius, radialSegments, closed)
+            console.log('tubeGeo', tubeGeo)
+            var tubeMaterial = new THREE.MeshBasicMaterial({
+                color: '#2A3CB4',
+                side: THREE.DoubleSide
+            }) 
+            var tube = new THREE.Mesh(tubeGeo, tubeMaterial);
+            // tube.position.set(3, 3, 3);
+            scene.add(tube)
+        }
+
+        function addKeyListener(){
+            var startX, endX, startY, endY,startZ,endZ;
+            var keyFlag = false;
+            document.body.onmousedown = function(event){
+                keyFlag = true;
+                startX = event.clientX;
+                startY = event.clientY;
+                startZ = event.clientZ;
+            }
+            
+            document.body.onmousemove = function(event){
+                if(keyFlag){
+                    endX = event.clientX;
+                    endY = event.clientY;
+                    endZ = event.clientZ;
+                    var x = endX - startX;
+                    var y = endY - startY;
+                    var z = endZ - startZ;
+                    
+                    camera.position.x -= x*0.05
+                    camera.position.y += y*0.05
+                    // camera.position.z += z*0.05
+
+                    startX = endX
+                    startY = endY
+                    startZ = endZ
+                }
+            }
+
+            document.body.onmouseup = function(event){
+                keyFlag = false;
+            }
+        }
+
+        function render(){
+            requestAnimationFrame(render);
+            controls.update()
+            renderer.render(scene, camera)
+        }
+        
+        initObject()
+        initLight()
+        // addKeyListener()
+        render()
+    </script>
+
+</body>
+</html>
