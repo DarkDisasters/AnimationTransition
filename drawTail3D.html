@@ -14,6 +14,8 @@
 <body onload="draw()">
     <script>
 
+        var object = [];
+
         var scene;
         function initScene(){
             scene = new THREE.Scene()
@@ -59,6 +61,8 @@
             controls.maxDistance = 600;
             //是否开启右键拖拽
             controls.enablePan = true;
+
+            
         }
         
         var light;
@@ -131,6 +135,7 @@
         }
 
         function addTail(liPoint, speed){
+            var tailArray = {};
             //add ball
             var ballGeo = new THREE.SphereGeometry(2, 16, 16)
             var ballMaterial = new THREE.MeshPhongMaterial({
@@ -142,6 +147,7 @@
             console.log('point', liPoint[0]['z'])
             var ballCenter = liPoint[0]
             ball.position.set(ballCenter['x'], ballCenter['y'], ballCenter['z'])
+            tailArray['ball'] = ball;
             scene.add(ball) 
 
             var tubePoints = liPoint
@@ -155,7 +161,10 @@
                 map: gradientTexture
             }) 
             var tube = new THREE.Mesh(tubeGeo, tubeMaterial);
+            tailArray['tube'] = tube;
             scene.add(tube)
+
+            object.push(tailArray)
         }
        
         function initModel(){
@@ -197,17 +206,41 @@
             
         }
 
+        function updateDot(preVector, currentVector){
+            var transVector = new THREE.Vector3(0,0,0)
+            transVector.subVectors(currentVector, preVector)
+            console.log('transVector', transVector)
+        }
 
         function render(){
             renderer.render(scene, camera)
         }
 
+        var prePosition; 
+        var currentPosition;
+        var timecount = 0
         function animate(){
-            requestAnimationFrame(animate);
+            var cPosition = camera.position
+            timecount ++
+            if(timecount == 1){
+                prePosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z);
+            }
+            // console.log('count', timecount)
+            currentPosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z)
+            // console.log('preposition', prePosition)
+            // console.log('currentPosition', currentPosition)
+            if(!prePosition.equals(currentPosition)){
+                updateDot(prePosition, currentPosition)
+                prePosition = new THREE.Vector3(currentPosition.x, currentPosition.y, currentPosition.z);
+            }
+            // console.log('camera', camera.position)
             controls.update()
             stats.update()
-           
+
             render()
+            
+
+            requestAnimationFrame(animate);
         }
         
         function draw(){
