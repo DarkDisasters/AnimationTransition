@@ -204,7 +204,7 @@
             scene.add(helper)
 
             var liPoint1 = []
-            liPoint1.push(new THREE.Vector3(0, 0, 0))
+            liPoint1.push(new THREE.Vector3(10, 10, 10))
             for(var i = 1; i < 5; i++){
                 var randomX1 = i*2 + Math.round(Math.random()*5)
                 var randomY1 = i*2 + Math.round(Math.random()*6)
@@ -284,15 +284,14 @@
 
             if(angle == NaN) return 0
             
-            // removeTube()
+            removeTube()
             for(var i = 0; i < object.length; i++){
                 console.log('i', i)
                 if(Math.abs(transVector.x) > 0.01 & Math.abs(transVector.y) > 0.01 & Math.abs(transVector.z) > 0.01){
                     var firstPoint = object[i][0]['point']
                     var firstVector = new THREE.Vector3(firstPoint.x, firstPoint.y, firstPoint.z)
                     for(var j = 0; j < object[i].length; j++){
-                            object[i][j]['point'].applyQuaternion(transQuaternion)
-                            // console.log('currpoint', object[i][j])
+                        object[i][j]['point'].applyQuaternion(transQuaternion)
                     }
                     console.log('singleobject', object[i])
                     addPoint(object[i], firstVector)
@@ -303,7 +302,7 @@
                 }
             }
 
-            removeTube()
+            // removeTube()
             for(var k = 0; k < object.length; k++){
                 console.log('k', k)
                 addTail(object[k], 30)
@@ -379,7 +378,6 @@
             console.log('timecount', timecount)
             if(timecount == 1){
                 prePosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z);
-                console.log('object', object)
             }
             currentPosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z)
             
