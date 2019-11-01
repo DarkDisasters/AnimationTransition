@@ -113,7 +113,8 @@
             var domainArray = [lasthalf, 100-speed, prehalf, 0]
 
             scalecolorArray.push(domaincolor)
-            var colorLinear = d3.scaleLinear().range([domaincolor, 'white']).domain([0, 100])
+            var colorLinear = d3.scaleLinear().range([domaincolor, 'black']).domain([0, 100])
+            // var colorLinear = d3.scaleLinear().range([domaincolor, 'white']).domain([0, 100])
             for(var i = 0; i < scalecolorAlpha.length; i++){
                 var linearColor = colorLinear(scalecolorAlpha[i]*100)
                 scalecolorArray.push(linearColor)
