@@ -9,15 +9,13 @@
     <script src = './lib/OrbitControls.js'></script>
     <script src = './lib/stats.min.js'></script>
     <script src = './lib/d3.js'></script>
-    <script src = './lib/jquery.js'></script>
     <!-- <script src = './lib/dat.gui.min.js'></script> -->
 </head>
-<body onload="onloadData()">
+<body onload="draw()">
     <script>
 
         var object = [];
-        var dataList = []
-        var tailPoint = []
+        
 
         var scene;
         function initScene(){
@@ -138,7 +136,53 @@
             return texture
         }
 
-        
+        function addTail(pointObjects, speed){
+            console.log('pointobjects', pointObjects)
+            var liPoint = []
+            if(pointObjects.length == 1){
+                liPoint.push(pointObjects[0]['point'])
+            }
+            else{
+                for(var i = 0; i < pointObjects.length; i++){
+                    liPoint.push(pointObjects[i]['point'])
+                }
+            }
+            
+            console.log('lipoint', liPoint)
+            var tailArray = {};
+            //add ball
+            var ballGeo = new THREE.SphereGeometry(2, 16, 16)
+            var ballMaterial = new THREE.MeshPhongMaterial({
+                color: 'red',
+            }); 
+            var ball = new THREE.Mesh(ballGeo, ballMaterial)   //网孔(Mesh)是用来承载几何模型的一个对象，可以把材料应用到它上面
+            // ball.geometry.verticesNeedUpdate = true;
+            // ball.geometry.normalsNeedUpdate = true;
+            console.log('point', liPoint[0]['z'])
+            var ballCenter = liPoint[0]
+            ball.position.set(ballCenter['x'], ballCenter['y'], ballCenter['z'])
+            tailArray['ball'] = ball;
+            scene.add(ball) 
+
+            if(liPoint.length > 1){
+                var tubePoints = liPoint
+                var gradientTexture = generateGradientTexture(speed)
+                var segments = 64
+                var radius = 1
+                var radialSegments = 48
+                var closed = false
+                var tubeGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tubePoints), segments, radius, radialSegments, closed)
+                var tubeMaterial = new THREE.MeshPhongMaterial({
+                    map: gradientTexture
+                }) 
+                var tube = new THREE.Mesh(tubeGeo, tubeMaterial);
+                tailArray['tube'] = tube;
+                scene.add(tube)
+            }
+            
+
+        }
+       
         function addPoint(mainObject, liPoint){ 
             if(liPoint.length > 1){
                 for(var i = 0; i < liPoint.length; i++){
@@ -160,55 +204,51 @@
             var helper = new THREE.AxesHelper(50)
             scene.add(helper)
 
-            // var liPoint1 = []
-            // liPoint1.push(new THREE.Vector3(10, 10, 10))
-            // for(var i = 1; i < 5; i++){
-            //     var randomX1 = i*2 + Math.round(Math.random()*5)
-            //     var randomY1 = i*2 + Math.round(Math.random()*6)
-            //     var randomZ1 = i*2 + Math.round(Math.random()*6) 
-            //     liPoint1.push(new THREE.Vector3(randomX1,randomY1,randomZ1))
-            // }
-            // // var arr = [1,2,3]
-            // // console.log('arr', arr.reverse())
-            // var points1 = []
-            // addPoint(points1, liPoint1.reverse())
-            // object.push(points1)
-            // addTail(object[0], 30)
+            var liPoint1 = []
+            liPoint1.push(new THREE.Vector3(10, 10, 10))
+            for(var i = 1; i < 5; i++){
+                var randomX1 = i*2 + Math.round(Math.random()*5)
+                var randomY1 = i*2 + Math.round(Math.random()*6)
+                var randomZ1 = i*2 + Math.round(Math.random()*6) 
+                liPoint1.push(new THREE.Vector3(randomX1,randomY1,randomZ1))
+            }
+            // var arr = [1,2,3]
+            // console.log('arr', arr.reverse())
+            var points1 = []
+            addPoint(points1, liPoint1.reverse())
+            object.push(points1)
+            addTail(object[0], 30)
 
-            // var liPoint2 = []
-            // var points2 = []
-            // for(var i = 0; i < liPoint1.length; i++){
-            //     var randomX2 = liPoint1[i]['x']+20
-            //     var randomY2 = liPoint1[i]['y']+20
-            //     var randomZ2 = liPoint1[i]['z']+20 
-            //     liPoint2.push(new THREE.Vector3(randomX2,randomY2,randomZ2))
-            // }
+            var liPoint2 = []
+            var points2 = []
+            for(var i = 0; i < liPoint1.length; i++){
+                var randomX2 = liPoint1[i]['x']+20
+                var randomY2 = liPoint1[i]['y']+20
+                var randomZ2 = liPoint1[i]['z']+20 
+                liPoint2.push(new THREE.Vector3(randomX2,randomY2,randomZ2))
+            }
             
-            // addPoint(points2, liPoint2.reverse())
-            // object.push(points2)
-            // addTail(object[1], 90)
+            addPoint(points2, liPoint2.reverse())
+            object.push(points2)
+            addTail(object[1], 90)
         }
 
         function removeTube(){
             var allChildren = scene.children;
-            var allChildrenLen = allChildren.length
             console.log('child', allChildren)
-            console.log('lenchildpre', allChildren.length)
-            for(var i = 0; i < allChildrenLen; i++){
-                if(i >= 3){
-                    scene.remove(allChildren[3])
+            for(var i = 0; i < allChildren.length; i++){
+                if(allChildren[i] instanceof THREE.Mesh){
+                    scene.remove(allChildren[i])
                 }
             }
-            console.log('Afterchild', allChildren)
-            console.log('AfterchildLength', allChildren.length)
         }
-        
+
         function deleteExceedPoint(singleObject){
             if(singleObject.length == 1){
                 return 0
             }
             for(var i = singleObject.length-1; i >= 1; i--){
-                if(singleObject[i]['count'] >= 5){
+                if(singleObject[i]['count'] >= 120){
                     singleObject.splice(i,1)
                 }
                 else{
@@ -217,7 +257,7 @@
             }
         }
 
-        function updateDot2(preVector, currentVector){
+        function updateDot(preVector, currentVector){
             // removeTube()
             var transVector = new THREE.Vector3(0,0,0)
             transVector.subVectors(currentVector, preVector)
@@ -268,6 +308,51 @@
                 console.log('k', k)
                 addTail(object[k], 30)
             }
+
+            // if(Math.abs(transVector.x) > 0.01 & Math.abs(transVector.y) > 0.01 & Math.abs(transVector.z) > 0.01){
+            //     // removeTube()
+            //     console.log('object', object)
+            //     for(var i = 0; i < object.length; i++){
+            //         removeTube()
+            //         var addVector = new THREE.Vector3(0,0,0)
+            //         // if(object[i].length == 0){
+            //         //     addPoint(object[i], addVector)
+            //         // }
+            //         // else{
+            //         if(object[i].length > 1){    
+            //             var firstPoint = object[i][0]['point']
+            //             var firstVector = new THREE.Vector3(firstPoint.x, firstPoint.y, firstPoint.z)
+            //             // console.log('firstpoint', firstPoint)
+            //             for(var j = 0; j < object[i].length; j++){
+            //                 object[i][j]['point'].applyQuaternion(transQuaternion)
+            //                 // console.log('currpoint', object[i][j])
+            //             }
+            //             addPoint(object[i], firstVector)
+            //             // addVector.addVectors(object[i][0]['point'], transVector)
+            //             // addPoint(object[i], addVector)
+            //             deleteExceedPoint(object[i])
+            //         }
+            //         // }
+            //         console.log('i', i)
+            //     }
+            // }
+            // else{
+            //     for(var i = 0; i < object.length; i++){
+            //         console.log('aaaa')
+            //         deleteExceedPoint(object[i])
+            //     }
+            // }
+            // console.log('dddddddd')
+            // removeTube()
+            // for(var k = 0; k < object.length; k++){
+            //     if(object[k].length == 0){
+            //         removeTube()
+            //     }
+            //     else{
+            //         console.log('object', object[k])
+            //         addTail(object[k], 30)
+            //     }
+            // }
         }
 
         function render(){
@@ -275,93 +360,40 @@
         }
 
         function pointsTimeCount(){
-            for(var i = 0; i < tailPoint.length; i++){
-                var singleObject = tailPoint[i]
+            for(var i = 0; i < object.length; i++){
+                var singleObject = object[i]
                 for(var j = 0; j < singleObject.length; j++){
                     singleObject[j]['count'] ++
                 }
             }
         }
 
-        function addTail(pointObjects, speed){
-            // console.log('pointobjects', pointObjects)
-            var liPoint = []
-            if(pointObjects.length == 1){
-                liPoint.push(pointObjects[0]['point'])
-                // liPoint.push(pointObjects[0])
-            }
-            else{
-                for(var i = 0; i < pointObjects.length; i++){
-                    liPoint.push(pointObjects[i]['point'])
-                }
-            }
-            
-            // console.log('lipoint', liPoint)
-            var tailArray = {};
-            //add ball
-            var ballGeo = new THREE.SphereGeometry(2, 16, 16)
-            var ballMaterial = new THREE.MeshPhongMaterial({
-                color: 'red',
-            }); 
-            var ball = new THREE.Mesh(ballGeo, ballMaterial)   //网孔(Mesh)是用来承载几何模型的一个对象，可以把材料应用到它上面
-            // ball.geometry.verticesNeedUpdate = true;
-            // ball.geometry.normalsNeedUpdate = true;
-            // console.log('point', liPoint[0]['z'])
-            var ballCenter = liPoint[0]
-            ball.position.set(ballCenter['x'], ballCenter['y'], ballCenter['z'])
-            // tailArray['ball'] = ball;
-            scene.add(ball) 
-
-            if(liPoint.length > 1){
-                var tubePoints = liPoint
-                var gradientTexture = generateGradientTexture(speed)
-                var segments = 64
-                var radius = 1
-                var radialSegments = 8
-                var closed = false
-                var tubeGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tubePoints), segments, radius, radialSegments, closed)
-                var tubeMaterial = new THREE.MeshPhongMaterial({
-                    map: gradientTexture
-                }) 
-                var tube = new THREE.Mesh(tubeGeo, tubeMaterial);
-                // tailArray['tube'] = tube;
-                scene.add(tube)
-            }
-            
-
-        }
-       
-
-        function startDraw(){
-            removeTube()
-            // for(var j = 0; j < drawData.length; j++){
-                
-            // }
-            console.log('tailpoint', tailPoint)
-            for(var i = 0; i < tailPoint.length; i++){
-                addTail(tailPoint[i], 30)
-                deleteExceedPoint(tailPoint[i])
-            }
-        }
-
         var prePosition; 
         var currentPosition;
-        var timeCount = -1
-        var dataYearCount = 0
-        var drawData = []
+        var timecount = 0
         function animate(){
-            timeCount ++
-            for(var i = 0; i < tailPoint.length; i++){
-                var singleObject = {}
-                singleObject['count'] = 0
-                singleObject['point'] = dataList[i][timeCount]
-                tailPoint[i].unshift(singleObject)
-            }
-            console.log('timecount', timeCount)
-            
-            startDraw()
+            var cPosition = camera.position
+            timecount ++
             pointsTimeCount()
+            console.log('obj', object)
+            console.log('timecount', timecount)
+            if(timecount == 1){
+                prePosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z);
+            }
+            currentPosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z)
             
+            console.log('preposition', prePosition)
+            console.log('currentposition', currentPosition)
+            console.log('isEqual', prePosition.equals(currentPosition))
+
+            if(!prePosition.equals(currentPosition)){
+                updateDot(prePosition, currentPosition)
+                prePosition = new THREE.Vector3(currentPosition.x, currentPosition.y, currentPosition.z);
+            }
+            else{
+                updateDot(prePosition, currentPosition)
+            }
+
             controls.update()
             stats.update()
 
@@ -371,89 +403,18 @@
         }
         
         function draw(){
-            // console.log('datalist',dataList)
             initRenderer()
             initScene()
             initCamera()
             initLight()
             initModel()
-            
+
             initStats()
             initControls()
             animate()            
         }
        
         // addKeyListener()
-        function onloadData(){
-            // $.ajax({
-            //     type: 'GET',
-            //     url: './tailData/LogisticsInformation.csv',
-            //     dataType: 'text',
-            //     success: function(data){
-            //         console.log(typeof(data))
-
-            //     },
-            //     error: function(request, status, error){
-            //         alert(request.responseText)
-            //     }
-            // })
-            d3.csv('./tailData/LogisticsInformation.csv', function(error, csvdata){
-                if(error){
-                    console.log(error)
-                }
-                console.log(csvdata)
-                // var num = -5.16E-18
-                // console.log(num.toFixed(4))
-                var vector000 = new THREE.Vector3(0,0,0)
-                var vector111 = new THREE.Vector3(0,0,0)
-                var vector222 = new THREE.Vector3(20,20,20)
-                vector000.lerpVectors(vector222, vector111, 0.05)
-                console.log(vector000)
-                for(var i = 0; i < csvdata.length; i++){
-                    var emptyArray = []
-                    var emptyArray2 = []
-                    dataList.push(emptyArray)
-                    tailPoint.push(emptyArray2)
-
-                    var currentData = csvdata[i]
-                    for(var j = 1; j < 7; j++){
-                        var vector = new THREE.Vector3(parseInt(currentData['x'+ j]), parseInt(currentData['y'+j]), parseInt(currentData['z'+j]))
-                        
-                        // console.log('length',curlength)
-                        if(j == 1){
-                            dataList[i].push(vector)
-                            // dataList[1].push(vector2)
-                            // dataList[2].push(vector3)
-                            // dataList[3].push(vector4)
-                            // dataList[4].push(vector5)
-                            // dataList[5].push(vector6)
-                        }
-                        else{
-                            // console.log('aaaaa')
-                            var curlength = dataList[i].length
-                            var startVector = dataList[i][curlength-1]
-                            for(var k = 1; k < 50; k++){
-                                var middleVector = new THREE.Vector3(0,0,0)
-                                middleVector.lerpVectors(startVector, vector, k*0.02)
-                                dataList[i].push(middleVector)
-                            }
-                            dataList[i].push(vector)
-                        }
-                    }
-                    // var vector1 = new THREE.Vector3(currentData['x1'], currentData['y1'], currentData['z1'])
-                    // var vector2 = new THREE.Vector3(currentData['x2'], currentData['y2'], currentData['z2'])
-                    // var vector3 = new THREE.Vector3(currentData['x3'], currentData['y3'], currentData['z3'])
-                    // var vector4 = new THREE.Vector3(currentData['x4'], currentData['y4'], currentData['z4'])
-                    // var vector5 = new THREE.Vector3(currentData['x5'], currentData['y5'], currentData['z5'])
-                    // var vector6 = new THREE.Vector3(currentData['x6'], currentData['y6'], currentData['z6'])
-                    
-                    
-                }
-                console.log('datalist', dataList)
-                // console.log('tailpoint', tailPoint)
-                draw()
-            })
-        }
     </script>
     <canvas id = 'mycanvas' style='display:none'></canvas>
     <!-- <canvas id = 'generate_texture' width="64" height="32"></canvas> -->

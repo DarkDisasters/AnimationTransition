@@ -337,7 +337,6 @@
             // for(var j = 0; j < drawData.length; j++){
                 
             // }
-            console.log('tailpoint', tailPoint)
             for(var i = 0; i < tailPoint.length; i++){
                 addTail(tailPoint[i], 30)
                 deleteExceedPoint(tailPoint[i])
@@ -350,6 +349,8 @@
         var dataYearCount = 0
         var drawData = []
         function animate(){
+            console.log('dfdfdf')
+            
             timeCount ++
             for(var i = 0; i < tailPoint.length; i++){
                 var singleObject = {}
@@ -357,8 +358,7 @@
                 singleObject['point'] = dataList[i][timeCount]
                 tailPoint[i].unshift(singleObject)
             }
-            console.log('timecount', timeCount)
-            
+            console.log('tailpoint', tailPoint)
             startDraw()
             pointsTimeCount()
             
@@ -450,7 +450,7 @@
                     
                 }
                 console.log('datalist', dataList)
-                // console.log('tailpoint', tailPoint)
+                console.log('tailpoint', tailPoint)
                 draw()
             })
         }
