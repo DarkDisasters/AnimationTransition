@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src = './lib/three.js'></script>
+    <script src = './lib/OrbitControls.js'></script>
+    <script src = './lib/stats.min.js'></script>
+    <script src = './lib/d3.js'></script>
+    <script src = './lib/jquery.js'></script>
+    <!-- <script src = './lib/dat.gui.min.js'></script> -->
+</head>
+<body onload="onloadData()">
+    <script>
+
+        var object = [];
+        var dataList = []
+        var tailPoint = []
+
+        var scene;
+        function initScene(){
+            scene = new THREE.Scene()
+        }
+
+        var camera;
+        function initCamera(){
+            //创建透视投影相机，视角45度，画幅比例 宽比高，近平面距离0.1，远平面1000
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000)
+            camera.position.set( 30, 30, 400 );
+            camera.lookAt(0, 0, 0)
+        }
+        
+        var renderer;
+        function initRenderer(){
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            })
+            // renderer.setClearColor(0xb9d3ff,1)
+            renderer.setSize(window.innerWidth, window.innerHeight) //渲染器canvas宽高设为与窗口一致
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement)
+        }
+
+        var stats;
+        function initStats(){
+            stats = new Stats()
+            document.body.appendChild(stats.dom)
+        }
+        
+        var controls;
+        function initControls(){
+            controls = new THREE.OrbitControls(camera, renderer.domElement)
+            // 使动画循环使用时阻尼或自转 意思是否有惯性
+            controls.enableDamping = true;
+            //动态阻尼系数 就是鼠标拖拽旋转灵敏度
+            //controls.dampingFactor = 0.25;
+            //是否可以缩放
+            controls.enableZoom = true;
+            controls.minDistance = 10;
+             //设置相机距离原点的最远距离
+            controls.maxDistance = 600;
+            //是否开启右键拖拽
+            controls.enablePan = true;
+
+            
+        }
+        
+        var light;
+        function initLight(){
+            // scene.add(new THREE.AmbientLight(0x404040));
+        
+            // light = new THREE.DirectionalLight(0xffffff);
+            // light.position.set(1,1,1);
+            // scene.add(light);
+            scene.add(new THREE.AmbientLight(0x444444));
+
+            light = new THREE.DirectionalLight(0xffffff);
+            light.position.set(0, 0, 10);
+
+            light.castShadow = true;
+            light.shadow.camera.top = 10;
+            light.shadow.camera.bottom = -10;
+            light.shadow.camera.left = -10;
+            light.shadow.camera.right = 10;
+
+            //告诉平行光需要开启阴影投射
+            light.castShadow = true;
+
+            scene.add(light);
+        }
+
+        function generateGradientTexture(speed){
+            var canvas = document.getElementById('mycanvas')
+            var width=64, height=32; 
+            // var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            // var width = canvas.width;
+            // var height = canvas.height;
+            var ctx = canvas.getContext('2d')
+            // ctx.clearRect(0,0,window.width,window.height)
+
+            var gradient = ctx.createLinearGradient(0,0,canvas.width,0)
+            // var gradient = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2)
+            var colorArray = []
+
+            var prehalf = Math.floor((100 - speed)/2)
+            var lasthalf = Math.floor(100 - speed/2)
+            var domaincolor = d3.color('#0070C0')
+            var scalecolorAlpha = [0.25,0.4,0.7,0.95]
+            var scalecolorArray = []
+            var domainArray = [lasthalf, 100-speed, prehalf, 0]
+
+            scalecolorArray.push(domaincolor)
+            var colorLinear = d3.scaleLinear().range([domaincolor, 'black']).domain([0, 100])
+            // var colorLinear = d3.scaleLinear().range([domaincolor, 'white']).domain([0, 100])
+            for(var i = 0; i < scalecolorAlpha.length; i++){
+                var linearColor = colorLinear(scalecolorAlpha[i]*100)
+                scalecolorArray.push(linearColor)
+            }
+            var curLinear = d3.scaleLinear().range(scalecolorArray).domain([0, prehalf, 100-speed, lasthalf, 100])
+
+            for(var i = 0; i <= 1; i=i+0.01){
+                var currentColor = curLinear(i*100)
+                gradient.addColorStop(i, currentColor)
+            }
+
+            ctx.fillStyle = gradient
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+            var texture = new THREE.CanvasTexture(canvas)
+            // texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            // texture.anisotropy = 16     //定义纹理的各向异性
+            // texture.needsUpdate = true;
+            return texture
+        }
+
+        
+        function addPoint(mainObject, liPoint){ 
+            if(liPoint.length > 1){
+                for(var i = 0; i < liPoint.length; i++){
+                    var singleObject = {}
+                    singleObject['count'] = 0
+                    singleObject['point'] = liPoint[i]
+                    mainObject.unshift(singleObject)
+                }
+            }
+            else{
+                var singleObject = {}
+                singleObject['count'] = 0
+                singleObject['point'] = liPoint
+                mainObject.unshift(singleObject)
+            }
+        }
+
+        function initModel(){
+            var helper = new THREE.AxesHelper(50)
+            scene.add(helper)
+
+            // var liPoint1 = []
+            // liPoint1.push(new THREE.Vector3(10, 10, 10))
+            // for(var i = 1; i < 5; i++){
+            //     var randomX1 = i*2 + Math.round(Math.random()*5)
+            //     var randomY1 = i*2 + Math.round(Math.random()*6)
+            //     var randomZ1 = i*2 + Math.round(Math.random()*6) 
+            //     liPoint1.push(new THREE.Vector3(randomX1,randomY1,randomZ1))
+            // }
+            // // var arr = [1,2,3]
+            // // console.log('arr', arr.reverse())
+            // var points1 = []
+            // addPoint(points1, liPoint1.reverse())
+            // object.push(points1)
+            // addTail(object[0], 30)
+
+            // var liPoint2 = []
+            // var points2 = []
+            // for(var i = 0; i < liPoint1.length; i++){
+            //     var randomX2 = liPoint1[i]['x']+20
+            //     var randomY2 = liPoint1[i]['y']+20
+            //     var randomZ2 = liPoint1[i]['z']+20 
+            //     liPoint2.push(new THREE.Vector3(randomX2,randomY2,randomZ2))
+            // }
+            
+            // addPoint(points2, liPoint2.reverse())
+            // object.push(points2)
+            // addTail(object[1], 90)
+        }
+
+        function removeTube(){
+            var allChildren = scene.children;
+            console.log('child', allChildren)
+            for(var i = 0; i < allChildren.length; i++){
+                if(allChildren[i] instanceof THREE.Mesh){
+                    scene.remove(allChildren[i])
+                }
+            }
+        }
+
+        function deleteExceedPoint(singleObject){
+            if(singleObject.length == 1){
+                return 0
+            }
+            for(var i = singleObject.length-1; i >= 1; i--){
+                if(singleObject[i]['count'] >= 120){
+                    singleObject.splice(i,1)
+                }
+                else{
+                    return 0
+                }
+            }
+        }
+
+        function updateDot2(preVector, currentVector){
+            // removeTube()
+            var transVector = new THREE.Vector3(0,0,0)
+            transVector.subVectors(currentVector, preVector)
+
+            var normalizePre = new THREE.Vector3(preVector.x, preVector.y, preVector.z).normalize()
+            var normalizeCur = new THREE.Vector3(currentVector.x, currentVector.y, currentVector.z).normalize()
+
+            // var dotVector = new THREE.Vector3(currentVector.x, currentVector.y, currentVector.z)
+            var dotProduct = normalizeCur.dot(normalizePre)
+            var angle = Math.acos(dotProduct)
+            // var dotVector = currentVector.x*preVector.x + currentVector.y*preVector.y + currentVector.z*preVector.z
+
+            var crossVector = new THREE.Vector3(0,0,0)
+            crossVector.crossVectors(normalizeCur,normalizePre).normalize()
+
+            var transQuaternion = new THREE.Quaternion()
+            transQuaternion.setFromAxisAngle(crossVector, angle)
+
+            console.log('transvector', transVector)
+            console.log('dotProduct', dotProduct)
+            console.log('angle', angle)
+            console.log('crossvector', crossVector)
+            console.log('transQauter', transQuaternion)
+
+
+            if(angle == NaN) return 0
+            
+            removeTube()
+            for(var i = 0; i < object.length; i++){
+                console.log('i', i)
+                if(Math.abs(transVector.x) > 0.01 & Math.abs(transVector.y) > 0.01 & Math.abs(transVector.z) > 0.01){
+                    var firstPoint = object[i][0]['point']
+                    var firstVector = new THREE.Vector3(firstPoint.x, firstPoint.y, firstPoint.z)
+                    for(var j = 0; j < object[i].length; j++){
+                        object[i][j]['point'].applyQuaternion(transQuaternion)
+                    }
+                    console.log('singleobject', object[i])
+                    addPoint(object[i], firstVector)
+                    deleteExceedPoint(object[i])
+                }
+                else{
+                    deleteExceedPoint(object[i])
+                }
+            }
+
+            // removeTube()
+            for(var k = 0; k < object.length; k++){
+                console.log('k', k)
+                addTail(object[k], 30)
+            }
+        }
+
+        function render(){
+            renderer.render(scene, camera)
+        }
+
+        function pointsTimeCount(){
+            for(var i = 0; i < object.length; i++){
+                var singleObject = object[i]
+                for(var j = 0; j < singleObject.length; j++){
+                    singleObject[j]['count'] ++
+                }
+            }
+        }
+
+        function addTail(pointObjects, speed){
+            console.log('pointobjects', pointObjects)
+            var liPoint = []
+            if(pointObjects.length == 1){
+                // liPoint.push(pointObjects[0]['point'])
+                liPoint.push(pointObjects[0])
+            }
+            else{
+                for(var i = 0; i < pointObjects.length; i++){
+                    liPoint.push(pointObjects[i])
+                }
+            }
+            
+            console.log('lipoint', liPoint)
+            var tailArray = {};
+            //add ball
+            var ballGeo = new THREE.SphereGeometry(2, 16, 16)
+            var ballMaterial = new THREE.MeshPhongMaterial({
+                color: 'red',
+            }); 
+            var ball = new THREE.Mesh(ballGeo, ballMaterial)   //网孔(Mesh)是用来承载几何模型的一个对象，可以把材料应用到它上面
+            // ball.geometry.verticesNeedUpdate = true;
+            // ball.geometry.normalsNeedUpdate = true;
+            console.log('point', liPoint[0]['z'])
+            var ballCenter = liPoint[0]
+            ball.position.set(ballCenter['x'], ballCenter['y'], ballCenter['z'])
+            tailArray['ball'] = ball;
+            scene.add(ball) 
+
+            if(liPoint.length > 1){
+                var tubePoints = liPoint
+                var gradientTexture = generateGradientTexture(speed)
+                var segments = 64
+                var radius = 1
+                var radialSegments = 48
+                var closed = false
+                var tubeGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tubePoints), segments, radius, radialSegments, closed)
+                var tubeMaterial = new THREE.MeshPhongMaterial({
+                    map: gradientTexture
+                }) 
+                var tube = new THREE.Mesh(tubeGeo, tubeMaterial);
+                tailArray['tube'] = tube;
+                scene.add(tube)
+            }
+            
+
+        }
+       
+
+        function startDraw(drawData){
+            removeTube()
+            console.log('addTail', drawData)
+            for(var i = 0; i < drawData.length; i++){
+                addTail(drawData[i], 30)
+            }
+        }
+
+        var prePosition; 
+        var currentPosition;
+        var timeCount = 0
+        var dataYearCount = 0
+        var drawData = []
+        function animate(){
+            timeCount ++
+            if(timeCount % 20 == 5){
+                if(dataYearCount == 6){
+                    dataYearCount = 0
+                }
+
+                var curData = dataList[dataYearCount]
+                var curVector = []
+                for(var j = 0; j < curData.length; j++){
+                    var pointArray = []
+                    var vector = new THREE.Vector3(parseInt(curData[j][0]), parseInt(curData[j][1]), parseInt(curData[j][2]))
+                    pointArray.push(vector)
+                    curVector.push(pointArray)
+                }
+                
+                if(dataYearCount == 0){
+                    drawData = curVector
+                    startDraw(drawData)
+                }
+                else{
+                    for(var i = 0; i < curVector.length; i++){
+                        drawData[i].unshift(curVector[i][0])
+                    }                    
+                    startDraw(drawData)
+                }
+                dataYearCount++
+                
+            }
+
+            controls.update()
+            stats.update()
+
+            render()
+            
+            requestAnimationFrame(animate);
+        }
+        
+        function draw(){
+            // console.log('datalist',dataList)
+            initRenderer()
+            initScene()
+            initCamera()
+            initLight()
+            initModel()
+            
+            initStats()
+            initControls()
+            animate()            
+        }
+       
+        // addKeyListener()
+        function onloadData(){
+            // $.ajax({
+            //     type: 'GET',
+            //     url: './tailData/LogisticsInformation.csv',
+            //     dataType: 'text',
+            //     success: function(data){
+            //         console.log(typeof(data))
+
+            //     },
+            //     error: function(request, status, error){
+            //         alert(request.responseText)
+            //     }
+            // })
+            d3.csv('./tailData/LogisticsInformation.csv', function(error, csvdata){
+                if(error){
+                    console.log(error)
+                }
+                console.log(csvdata)
+                // var num = -5.16E-18
+                // console.log(num.toFixed(4))
+                var vector000 = new THREE.Vector3(0,0,0)
+                var vector111 = new THREE.Vector3(0,0,0)
+                var vector222 = new THREE.Vector3(20,20,20)
+                vector000.lerpVectors(vector222, vector111, 0.05)
+                console.log(vector000)
+                for(var i = 0; i < csvdata.length; i++){
+                    var emptyArray = []
+                    dataList.push(emptyArray)
+
+                    var currentData = csvdata[i]
+                    for(var j = 1; j < 7; j++){
+                        var vector = new THREE.Vector3(parseInt(currentData['x'+ j]), parseInt(currentData['y'+j]), parseInt(currentData['z'+j]))
+                        
+                        // console.log('length',curlength)
+                        if(j == 1){
+                            dataList[i].push(vector)
+                            // dataList[1].push(vector2)
+                            // dataList[2].push(vector3)
+                            // dataList[3].push(vector4)
+                            // dataList[4].push(vector5)
+                            // dataList[5].push(vector6)
+                        }
+                        else{
+                            // console.log('aaaaa')
+                            var curlength = dataList[i].length
+                            var startVector = dataList[i][curlength-1]
+                            for(var k = 1; k < 50; k++){
+                                var middleVector = new THREE.Vector3(0,0,0)
+                                middleVector.lerpVectors(startVector, vector, k*0.02)
+                                dataList[i].push(middleVector)
+                            }
+                            dataList[i].push(vector)
+                        }
+                    }
+                    // var vector1 = new THREE.Vector3(currentData['x1'], currentData['y1'], currentData['z1'])
+                    // var vector2 = new THREE.Vector3(currentData['x2'], currentData['y2'], currentData['z2'])
+                    // var vector3 = new THREE.Vector3(currentData['x3'], currentData['y3'], currentData['z3'])
+                    // var vector4 = new THREE.Vector3(currentData['x4'], currentData['y4'], currentData['z4'])
+                    // var vector5 = new THREE.Vector3(currentData['x5'], currentData['y5'], currentData['z5'])
+                    // var vector6 = new THREE.Vector3(currentData['x6'], currentData['y6'], currentData['z6'])
+                    
+                    
+                }
+                console.log('datalist', dataList)
+                // draw()
+            })
+        }
+    </script>
+    <canvas id = 'mycanvas' style='display:none'></canvas>
+    <!-- <canvas id = 'generate_texture' width="64" height="32"></canvas> -->
+</body>
+</html>
