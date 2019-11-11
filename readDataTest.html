@@ -10,7 +10,7 @@
     <script src = './lib/stats.min.js'></script>
     <script src = './lib/d3.js'></script>
     <script src = './lib/jquery.js'></script>
-    <!-- <script src = './lib/dat.gui.min.js'></script> -->
+    <script src = './lib/dat.gui.min.js'></script>
 </head>
 <body onload="onloadData()">
     <script>
@@ -18,6 +18,7 @@
         var object = [];
         var dataList = []
         var tailPoint = []
+        var textVisibleFlag = true
 
         var scene;
         function initScene(){
@@ -156,37 +157,31 @@
             }
         }
 
-        function initModel(){
+        function initHelper(){
             var helper = new THREE.AxesHelper(50)
             scene.add(helper)
+        }
 
-            // var liPoint1 = []
-            // liPoint1.push(new THREE.Vector3(10, 10, 10))
-            // for(var i = 1; i < 5; i++){
-            //     var randomX1 = i*2 + Math.round(Math.random()*5)
-            //     var randomY1 = i*2 + Math.round(Math.random()*6)
-            //     var randomZ1 = i*2 + Math.round(Math.random()*6) 
-            //     liPoint1.push(new THREE.Vector3(randomX1,randomY1,randomZ1))
-            // }
-            // // var arr = [1,2,3]
-            // // console.log('arr', arr.reverse())
-            // var points1 = []
-            // addPoint(points1, liPoint1.reverse())
-            // object.push(points1)
-            // addTail(object[0], 30)
+        var gui;
+        function initGui(){
+            gui = {
+                textVisible: true,
+                textSize: 100,
+                // redraw: function(){
+                //     if(gui.textVisible == true){
+                //         textVisibleFlag = true
+                //     }
+                //     else if (gui.textVisible == false){
+                //         textVisibleFlag = false
+                //     }
+                // }
+            }
 
-            // var liPoint2 = []
-            // var points2 = []
-            // for(var i = 0; i < liPoint1.length; i++){
-            //     var randomX2 = liPoint1[i]['x']+20
-            //     var randomY2 = liPoint1[i]['y']+20
-            //     var randomZ2 = liPoint1[i]['z']+20 
-            //     liPoint2.push(new THREE.Vector3(randomX2,randomY2,randomZ2))
-            // }
-            
-            // addPoint(points2, liPoint2.reverse())
-            // object.push(points2)
-            // addTail(object[1], 90)
+            var dataGui = new dat.GUI();
+            dataGui.add(gui, 'textVisible')
+            dataGui.add(gui, 'textSize', 50, 150)
+
+            // gui.redraw()
         }
 
         function removeTube(){
@@ -283,6 +278,109 @@
             }
         }
 
+         function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x+r, y);
+            ctx.lineTo(x+w-r, y);
+            ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+            ctx.lineTo(x+w, y+h-r);
+            ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+            ctx.lineTo(x+r, y+h);
+            ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+            ctx.lineTo(x, y+r);
+            ctx.quadraticCurveTo(x, y, x+r, y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+
+        /* 创建字体精灵 */
+        function makeTextSprite(message, parameters) {
+
+            if ( parameters === undefined ) parameters = {};
+
+            var fontface = parameters.hasOwnProperty("fontface") ?
+                parameters["fontface"] : "Arial";
+
+            /* 字体大小 */
+            var fontsize = parameters.hasOwnProperty("fontsize") ?
+                parameters["fontsize"] : 18;
+
+            /* 边框厚度 */
+            var borderThickness = parameters.hasOwnProperty("borderThickness") ?
+                parameters["borderThickness"] : 4;
+
+            /* 边框颜色 */
+            var borderColor = parameters.hasOwnProperty("borderColor") ?
+                parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
+
+            /* 背景颜色 */
+            var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?
+                parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
+
+            var isVisible = parameters.hasOwnProperty("isVisible") ?
+                parameters["isVisible"] : true;
+
+            /* 创建画布 */
+            var canvas = document.createElement('canvas');
+            var context = canvas.getContext('2d');
+            canvas.width = 256
+            canvas.height = 128
+
+            /* 字体加粗 */
+            context.font = "Bold " + fontsize + "px " + fontface;
+
+            /* 获取文字的大小数据，高度取决于文字的大小 */
+            var metrics = context.measureText( message );
+            var textWidth = metrics.width;
+
+            /* 背景颜色 */
+            context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
+                + backgroundColor.b + "," + backgroundColor.a + ")";
+
+            /* 边框的颜色 */
+            context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + ","
+                + borderColor.b + "," + borderColor.a + ")";
+            context.lineWidth = borderThickness;
+
+            /* 绘制圆角矩形 */
+            roundRect(context, borderThickness/2, borderThickness/2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 6);
+
+            /* 字体颜色 */
+            context.fillStyle = "rgba(0, 0, 0, 1.0)";
+            context.fillText( message, borderThickness, fontsize + borderThickness);
+
+            /* 画布内容用于纹理贴图 */
+            var texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+
+            var spriteMaterial = new THREE.SpriteMaterial({ map: texture } );
+            var sprite = new THREE.Sprite( spriteMaterial );
+
+            console.log('spriteMaterial',sprite.spriteMaterial);
+
+            /* 缩放比例 */
+            sprite.scale.set(10,5,1);
+            sprite.visible = isVisible
+
+            return sprite;
+
+        }
+
+        function addText(firstObject, textContent){
+            // console.log('textContent', textContent)
+            var firstPoint = firstObject['point']
+            var curText = makeTextSprite(textContent,{
+                fontsize: gui.textSize,
+                borderColor: {r:255, g:0, b:0, a:0.4},/* 边框黑色 */
+                backgroundColor: {r:255, g:255, b:255, a:0.9},/* 背景颜色 */
+                isVisible: gui.textVisible
+            })
+            scene.add(curText)
+            curText.position.set(firstPoint['x']-5, firstPoint['y']-5, firstPoint['z']-5)
+        }
+
         function addTail(pointObjects, speed){
             // console.log('pointobjects', pointObjects)
             var liPoint = []
@@ -339,17 +437,30 @@
             // }
             console.log('tailpoint', tailPoint)
             for(var i = 0; i < tailPoint.length; i++){
+                addText(tailPoint[i][0],dataList[i][0])
                 addTail(tailPoint[i], 30)
                 deleteExceedPoint(tailPoint[i])
             }
         }
 
+        // function textIsDisplay(){
+        //     var allChildren = scene.children;
+        //     var allChildrenLen = allChildren.length
+        //     for(var i = 0; i < allChildrenLen; i++){
+        //         if(allChildren[i].type instanceof THREE.Sprite){
+        //             console.log('aaaaaaaaaaaaa')
+        //             break
+        //         }
+        //     }
+        // }
+
         var prePosition; 
         var currentPosition;
-        var timeCount = -1
+        var timeCount = 0
         var dataYearCount = 0
         var drawData = []
         function animate(){
+            // textIsDisplay()
             timeCount ++
             for(var i = 0; i < tailPoint.length; i++){
                 var singleObject = {}
@@ -357,7 +468,6 @@
                 singleObject['point'] = dataList[i][timeCount]
                 tailPoint[i].unshift(singleObject)
             }
-            console.log('timecount', timeCount)
             
             startDraw()
             pointsTimeCount()
@@ -370,20 +480,27 @@
             requestAnimationFrame(animate);
         }
         
+        function onWindowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight
+            camera.updateProjectionMatrix()
+            render()
+            renderer.setSize(window.innerWidth, window.innerHeight)
+        }
+
         function draw(){
-            // console.log('datalist',dataList)
+            initGui()
             initRenderer()
             initScene()
             initCamera()
             initLight()
-            initModel()
+            initHelper()
             
             initStats()
             initControls()
-            animate()            
+            animate()    
+            window.onresize = onWindowResize;       
         }
        
-        // addKeyListener()
         function onloadData(){
             // $.ajax({
             //     type: 'GET',
@@ -410,12 +527,15 @@
                 vector000.lerpVectors(vector222, vector111, 0.05)
                 console.log(vector000)
                 for(var i = 0; i < csvdata.length; i++){
+
                     var emptyArray = []
                     var emptyArray2 = []
                     dataList.push(emptyArray)
                     tailPoint.push(emptyArray2)
+                    
 
                     var currentData = csvdata[i]
+                    dataList[i].push(currentData['Country Code'])
                     for(var j = 1; j < 7; j++){
                         var vector = new THREE.Vector3(parseInt(currentData['x'+ j]), parseInt(currentData['y'+j]), parseInt(currentData['z'+j]))
                         
