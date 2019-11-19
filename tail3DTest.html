@@ -26,7 +26,7 @@
         function initCamera(){
             //创建透视投影相机，视角45度，画幅比例 宽比高，近平面距离0.1，远平面1000
             camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000)
-            camera.position.set( 30, 30, 400 );
+            camera.position.set( 360, 0, 0 );
             camera.lookAt(0, 0, 0)
         }
         
@@ -114,7 +114,6 @@
 
             scalecolorArray.push(domaincolor)
             var colorLinear = d3.scaleLinear().range([domaincolor, 'black']).domain([0, 100])
-            // var colorLinear = d3.scaleLinear().range([domaincolor, 'white']).domain([0, 100])
             for(var i = 0; i < scalecolorAlpha.length; i++){
                 var linearColor = colorLinear(scalecolorAlpha[i]*100)
                 scalecolorArray.push(linearColor)
@@ -136,17 +135,17 @@
             return texture
         }
 
-        function addTail(pointObjects, speed){
-            console.log('pointobjects', pointObjects)
-            var liPoint = []
-            if(pointObjects.length == 1){
-                liPoint.push(pointObjects[0]['point'])
-            }
-            else{
-                for(var i = 0; i < pointObjects.length; i++){
-                    liPoint.push(pointObjects[i]['point'])
-                }
-            }
+        function addTail(liPoint, speed){
+            // console.log('pointobjects', pointObjects)
+            // var liPoint = []
+            // if(pointObjects.length == 1){
+            //     liPoint.push(pointObjects[0]['point'])
+            // }
+            // else{
+            //     for(var i = 0; i < pointObjects.length; i++){
+            //         liPoint.push(pointObjects[i]['point'])
+            //     }
+            // }
             
             console.log('lipoint', liPoint)
             var tailArray = {};
@@ -205,32 +204,80 @@
             scene.add(helper)
 
             var liPoint1 = []
-            liPoint1.push(new THREE.Vector3(10, 10, 10))
-            for(var i = 1; i < 5; i++){
-                var randomX1 = i*2 + Math.round(Math.random()*5)
-                var randomY1 = i*2 + Math.round(Math.random()*6)
-                var randomZ1 = i*2 + Math.round(Math.random()*6) 
+            liPoint1.push(new THREE.Vector3(0, 0, 0))
+            for(var i = 1; i < 4; i++){
+                var randomX1 = i*2 + Math.round(Math.random()*3)
+                var randomY1 = i*2 + Math.round(Math.random()*4)
+                var randomZ1 = i*2 + Math.round(Math.random()*4) 
                 liPoint1.push(new THREE.Vector3(randomX1,randomY1,randomZ1))
             }
             // var arr = [1,2,3]
             // console.log('arr', arr.reverse())
             var points1 = []
-            addPoint(points1, liPoint1.reverse())
-            object.push(points1)
-            addTail(object[0], 30)
+            // addPoint(points1, liPoint1.reverse())
+            // object.push(points1)
+            addTail(liPoint1, 30)
 
-            var liPoint2 = []
-            var points2 = []
-            for(var i = 0; i < liPoint1.length; i++){
-                var randomX2 = liPoint1[i]['x']+20
-                var randomY2 = liPoint1[i]['y']+20
-                var randomZ2 = liPoint1[i]['z']+20 
-                liPoint2.push(new THREE.Vector3(randomX2,randomY2,randomZ2))
+
+            var liPointss = [
+                [[0,0,0], [0,10,10], [0,10,30]],
+                [[30,10,50], [40,10,50], [40,30,30]],
+                // [[0,0,0], [0,10,10], [0,10,30]],
+                // [[0,0,0], [0,10,10], [0,10,30]],
+                // [[0,0,0], [0,10,10], [0,10,30]],
+                // [[0,0,0], [0,10,10], [0,10,30]],
+                // [[0,0,0], [0,10,10], [0,10,30]],
+                // [[0,0,0], [0,10,10], [0,10,30]],
+                // [[0,0,0], [0,10,10], [0,10,30]],
+                // [[0,0,0], [0,10,10], [0,10,30]],
+            ]
+
+            for(var l = 0; l < liPointss.length; l++){
+                var curPoint = liPointss[l]
+                var tailPointss = []
+                for(var m = 0; m <curPoint.length; m++){
+                    tailPointss.push(new THREE.Vector3(curPoint[m][0], curPoint[m][1], curPoint[m][1]))
+                }
+                addTail(tailPointss, 60)
             }
+
+            // for(var l = 1; l <= 5; l++){
+            //     console.log('aaaaaa')
+            //     for(var m = 1; m <= 5; m++){
+            //         console.log('bbbbbbb')
+            //         var liPointTest = []
+            //         // var pointTest = []
+            //         for(var n = 0; n < liPoint1.length; n++){
+            //             if(m > 5){
+            //                 var randomXText = liPoint1[n]['x'] + l*10
+            //                 var randomYText = liPoint1[n]['y'] + m*(Math.random()*15)
+            //                 var randomZText = liPoint1[n]['z']
+            //             }
+            //             else{
+            //                 var randomXText = liPoint1[n]['x'] + l*10
+            //                 var randomYText = liPoint1[n]['y']
+            //                 var randomZText = liPoint1[n]['z'] + m*(Math.random()*15)
+            //             }
+            //             liPointTest.push(new THREE.Vector3(randomXText,randomYText,randomZText))
+            //         }
+            //         // addPoint(pointTest, liPointTest.reverse())
+            //         console.log('liPointTest', liPointTest)
+            //         addTail(liPointTest, i*15)
+            //     }
+            // }
+
+            // var liPoint2 = []
+            // var points2 = []
+            // for(var i = 0; i < liPoint1.length; i++){
+            //     var randomX2 = liPoint1[i]['x']+20
+            //     var randomY2 = liPoint1[i]['y']+20
+            //     var randomZ2 = liPoint1[i]['z']+20 
+            //     liPoint2.push(new THREE.Vector3(randomX2,randomY2,randomZ2))
+            // }
             
-            addPoint(points2, liPoint2.reverse())
-            object.push(points2)
-            addTail(object[1], 90)
+            // // addPoint(points2, liPoint2.reverse())
+            // // object.push(points2)
+            // addTail(liPoint2, 90)
         }
 
         function removeTube(){
@@ -244,10 +291,7 @@
         }
 
         function deleteExceedPoint(singleObject){
-            if(singleObject.length == 1){
-                return 0
-            }
-            for(var i = singleObject.length-1; i >= 1; i--){
+            for(var i = singleObject.length-1; i >= 0; i--){
                 if(singleObject[i]['count'] >= 120){
                     singleObject.splice(i,1)
                 }
@@ -262,97 +306,43 @@
             var transVector = new THREE.Vector3(0,0,0)
             transVector.subVectors(currentVector, preVector)
 
-            var normalizePre = new THREE.Vector3(preVector.x, preVector.y, preVector.z).normalize()
-            var normalizeCur = new THREE.Vector3(currentVector.x, currentVector.y, currentVector.z).normalize()
-
-            // var dotVector = new THREE.Vector3(currentVector.x, currentVector.y, currentVector.z)
-            var dotProduct = normalizeCur.dot(normalizePre)
-            var angle = Math.acos(dotProduct)
-            // var dotVector = currentVector.x*preVector.x + currentVector.y*preVector.y + currentVector.z*preVector.z
-
-            var crossVector = new THREE.Vector3(0,0,0)
-            crossVector.crossVectors(normalizeCur,normalizePre).normalize()
-
-            var transQuaternion = new THREE.Quaternion()
-            transQuaternion.setFromAxisAngle(crossVector, angle)
-
-            console.log('transvector', transVector)
-            console.log('dotProduct', dotProduct)
-            console.log('angle', angle)
-            console.log('crossvector', crossVector)
-            console.log('transQauter', transQuaternion)
-
-
-            if(angle == NaN) return 0
+            if(Math.abs(transVector.x) > 0.01 & Math.abs(transVector.y) > 0.01 & Math.abs(transVector.z) > 0.01){
+                // removeTube()
+                console.log('transVector', transVector)
+                console.log('object', object)
+                for(var i = 0; i < object.length; i++){
+                    removeTube()
+                    var addVector = new THREE.Vector3(0,0,0)
+                    if(object[i].length == 0){
+                        addPoint(object[i], addVector)
+                    }
+                    else{
+                        addVector.addVectors(object[i][0]['point'], transVector)
+                        addPoint(object[i], addVector)
+                        deleteExceedPoint(object[i])
+                    }
+                    // var tubepoints = object[i]
+                    // console.log('tubepoints', tubepoints)
+                    console.log('i', i)
+                }
+            }
+            else{
+                for(var i = 0; i < object.length; i++){
+                    console.log('aaaa')
+                    deleteExceedPoint(object[i])
+                }
+            }
             
             removeTube()
-            for(var i = 0; i < object.length; i++){
-                console.log('i', i)
-                if(Math.abs(transVector.x) > 0.01 & Math.abs(transVector.y) > 0.01 & Math.abs(transVector.z) > 0.01){
-                    var firstPoint = object[i][0]['point']
-                    var firstVector = new THREE.Vector3(firstPoint.x, firstPoint.y, firstPoint.z)
-                    for(var j = 0; j < object[i].length; j++){
-                        object[i][j]['point'].applyQuaternion(transQuaternion)
-                    }
-                    console.log('singleobject', object[i])
-                    addPoint(object[i], firstVector)
-                    deleteExceedPoint(object[i])
+            for(var k = 0; k < object.length; k++){
+                if(object[k].length == 0){
+                    removeTube()
                 }
                 else{
-                    deleteExceedPoint(object[i])
+                    console.log('object', object[k])
+                    addTail(object[k], 30)
                 }
             }
-
-            // removeTube()
-            for(var k = 0; k < object.length; k++){
-                console.log('k', k)
-                addTail(object[k], 30)
-            }
-
-            // if(Math.abs(transVector.x) > 0.01 & Math.abs(transVector.y) > 0.01 & Math.abs(transVector.z) > 0.01){
-            //     // removeTube()
-            //     console.log('object', object)
-            //     for(var i = 0; i < object.length; i++){
-            //         removeTube()
-            //         var addVector = new THREE.Vector3(0,0,0)
-            //         // if(object[i].length == 0){
-            //         //     addPoint(object[i], addVector)
-            //         // }
-            //         // else{
-            //         if(object[i].length > 1){    
-            //             var firstPoint = object[i][0]['point']
-            //             var firstVector = new THREE.Vector3(firstPoint.x, firstPoint.y, firstPoint.z)
-            //             // console.log('firstpoint', firstPoint)
-            //             for(var j = 0; j < object[i].length; j++){
-            //                 object[i][j]['point'].applyQuaternion(transQuaternion)
-            //                 // console.log('currpoint', object[i][j])
-            //             }
-            //             addPoint(object[i], firstVector)
-            //             // addVector.addVectors(object[i][0]['point'], transVector)
-            //             // addPoint(object[i], addVector)
-            //             deleteExceedPoint(object[i])
-            //         }
-            //         // }
-            //         console.log('i', i)
-            //     }
-            // }
-            // else{
-            //     for(var i = 0; i < object.length; i++){
-            //         console.log('aaaa')
-            //         deleteExceedPoint(object[i])
-            //     }
-            // }
-            // console.log('dddddddd')
-            // removeTube()
-            // for(var k = 0; k < object.length; k++){
-            //     if(object[k].length == 0){
-            //         removeTube()
-            //     }
-            //     else{
-            //         console.log('object', object[k])
-            //         addTail(object[k], 30)
-            //     }
-            // }
         }
 
         function render(){
@@ -372,29 +362,28 @@
         var currentPosition;
         var timecount = 0
         function animate(){
-            var cPosition = camera.position
-            timecount ++
-            pointsTimeCount()
-            console.log('obj', object)
-            console.log('timecount', timecount)
-            if(timecount == 1){
-                prePosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z);
-            }
-            currentPosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z)
+            // var cPosition = camera.position
+            // timecount ++
+            // pointsTimeCount()
+            // if(timecount == 1){
+            //     prePosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z);
+            //     console.log('object', object)
+            // }
+            // currentPosition = new THREE.Vector3(cPosition.x, cPosition.y, cPosition.z)
             
-            console.log('preposition', prePosition)
-            console.log('currentposition', currentPosition)
-            console.log('isEqual', prePosition.equals(currentPosition))
+            // console.log('preposition', prePosition)
+            // console.log('currentposition', currentPosition)
+            // console.log('isEqual', prePosition.equals(currentPosition))
 
-            if(!prePosition.equals(currentPosition)){
-                updateDot(prePosition, currentPosition)
-                prePosition = new THREE.Vector3(currentPosition.x, currentPosition.y, currentPosition.z);
-            }
-            else{
-                updateDot(prePosition, currentPosition)
-            }
+            // if(!prePosition.equals(currentPosition)){
+            //     updateDot(prePosition, currentPosition)
+            //     prePosition = new THREE.Vector3(currentPosition.x, currentPosition.y, currentPosition.z);
+            // }
+            // else{
+            //     updateDot(prePosition, currentPosition)
+            // }
 
-            controls.update()
+            // controls.update()
             stats.update()
 
             render()
