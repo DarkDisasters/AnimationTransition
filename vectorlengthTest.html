@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <script src = "./lib/jquery.js"></script>
+    <script src = "./lib/d3.js"></script>
+    <script src = "./lib/paper-full.js "></script>
+</head>
+<body>
+    <script type="text/paperscript" canvas = "mycanvas">
+        var length = 9
+        var path = []
+        var startPoints = []
+        var projectList = []
+        var tailList = []
+
+        var Tail = function(path, startPoint){
+            this.path = path
+            this.startPoint = new Point(startPoint)
+            this.tailGenerate = function(){
+                return new Path({
+                    //strokeColor: '#E4141B',
+                    strokeColor: 'black',
+                    strokeWidth: 2,
+                    strokeCap: 'round'
+                }) 
+            }
+        }
+
+        
+        for(var i = 0; i < 22; i++){
+            var store = {
+                'traceOffset':[], 
+                'startPoints':[]
+            }
+            for(var j = 0; j < 10; j++){
+                var trace = [Math.random()*50, Math.random()*50]
+                store['traceOffset'].push(trace)
+            }
+            var xOffset = Math.floor(i / 4)
+            var yOffset = i % 4
+            
+
+            for(var k = 0; k < 15; k++){
+                var point = [180*xOffset+Math.random()*180, 180*yOffset+Math.random()*180]
+                store['startPoints'].push(point)
+            }
+            projectList.push(store)
+           
+        }
+        console.log('projectList', projectList)
+
+        var drawTail = function(){
+            for(var i = 0; i < projectList.length; i++){
+                var curproject = projectList[i]
+                for(var j = 0; j < curproject['startPoints'].length; j++){
+                    var project = new Tail(curproject['traceOffset'], curproject['startPoints'][j])
+                    var tail = project.tailGenerate()
+                    for(var k = 1; k < 10; k++){
+                        tail.add(project.startPoint + new Point(k*length, 0))
+                    }
+                    project['tail'] = tail
+                    tailList.push(project)
+                }
+            }
+        }
+
+        var moveAlongPath = function(){
+            for(var i = 0; i < tailList.length; i++){
+                var tracePath = tailList[i]['path']
+                var curTail = tailList[i]['tail'] 
+                var curStartPoint = tailList[i]['startPoint']
+                for(var j = 0; j < tracePath.length; j++){
+                    curTail.firstSegment.point = curStartPoint + new Point(tracePath[j][0], tracePath[j][1])
+                    
+                    for(var k = 0; k < 8; k++){
+                        var segment = curTail.segments[k]
+                        var nextSegment = segment.next;
+                        var vector = segment.point - nextSegment.point
+                        vector.length = length;
+                        nextSegment.point = segment.point - vector
+                    }
+                }
+            }
+        }
+
+        drawTail()
+        moveAlongPath()
+        console.log('taillist', tailList)
+
+        /*
+        function onMouseDown(event) {
+            for(var i = 0; i < path.length; i++){
+                path[i].fullySelected = true;
+                path[i].strokeColor = '#e08285';
+            }
+            
+        }
+        
+        function onMouseUp(event) {
+            for(var i = 0; i < path.length; i++){
+                path[i].fullySelected = false;
+                path[i].strokeColor = '#e4141b';
+            }
+        }*/
+    </script>
+    
+    <canvas id = "mycanvas" width = "1200" height="1200">
+    </canvas>
+
+</body>
+</html>
