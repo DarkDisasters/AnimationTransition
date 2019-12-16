@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <script src = "./lib/jquery.js"></script>
+    <script src = "./lib/d3.js"></script>
+    <script src = "./lib/paper-full.js "></script>
+</head>
+<body>
+    <script type="text/paperscript" canvas = "mycanvas">
+        var length = 9
+        var path = []
+        var startPoints = []
+        var projectList = []
+        var originList = []
+        var tailList = []
+        var tailPath = []
+        var pathTest = [
+            [-17, 4],
+            [-24, 10],
+            [-29, 19],
+            [-37, 25],
+            [-47, 32],
+            [-35, 36],
+            [-16, 47],
+            [-39, 50],
+            [-26, 55],
+            [-13, 59]
+        ]
+
+        for(var l = 0; l < pathTest.length; l++){
+            var trace = [pathTest[l][0], pathTest[l][1]]
+            tailPath.push(trace)
+        }
+
+        console.log('tailPath', tailPath)
+
+        var Tail = function(path, startPoint){
+            this.path = path
+            this.startPoint = new Point(startPoint)
+            this.tailGenerate = function(){
+                var originPath = new Path({
+                    //strokeColor: '#E4141B',
+                    strokeColor: 'black',
+                    strokeWidth: 2,
+                    strokeCap: 'round'
+                })
+                for(var i = 0; i < 10; i++){
+                    originPath.add(this.startPoint + new Point(i*length, 0))
+                }
+                return originPath
+            }
+        }
+
+        var moveTail = function(startpoint, path, tracePoint){
+            path.firstSegment.point = startpoint + new Point(tracePoint[0],tracePoint[1]);
+            for (var i = 0; i < path.segments.length - 1; i++) {
+                var segment = path.segments[i];
+                var nextSegment = segment.next;
+                var vector = segment.point - nextSegment.point;
+                vector.length = length;
+                nextSegment.point = segment.point - vector;
+            }
+            path.smooth({ type: 'continuous' });
+        }
+
+        for(var i = 0; i < 21; i++){
+            var store = {
+                'traceOffset':[], 
+                'startPoints':[]
+            }
+            var flagInterval = Math.floor(i / 2)
+
+            for(var j = 0; j < flagInterval; j++){
+                store['traceOffset'].push(tailPath[j])
+            }
+           
+            
+            var yOffset = i % 4
+            var xOffset = Math.floor(i / 4)
+            
+
+            for(var k = 0; k < 15; k++){
+                var point = [180*xOffset+Math.random()*150, 180*(yOffset+0.5)+Math.random()*150]
+                store['startPoints'].push(point)
+            }
+            projectList.push(store)
+        }
+        console.log('projectList', projectList)
+
+        var drawTail = function(){
+            for(var i = 0; i < projectList.length; i++){
+                var curproject = projectList[i]
+                for(var j = 0; j < curproject['startPoints'].length; j++){
+                    var emptylist = []
+                    var project = new Tail(curproject['traceOffset'], curproject['startPoints'][j])
+                    var tail = project.tailGenerate()
+                    /*
+                    for(var k = 1; k < 10; k++){
+                        tail.add(project.startPoint + new Point(k*length, 0))
+                    }
+                    */
+                    emptylist['startPoint'] = project.startPoint
+                    emptylist['tail'] = tail
+                    emptylist['path'] = project.path
+                    //project['tail'] = tail
+                    //tailList.push(project)
+                    tailList.push(emptylist)
+                }
+            }
+        }
+
+        var drawOriginTail = function(){
+            console.log('taillist',tailList)
+            for(var i = 0; i < tailList.length; i++){
+                var curStartPoint = tailList[i]['startPoint']
+                var originPath = new Tail(tailList[i]['path'], curStartPoint).tailGenerate()
+                originList.push(originPath)
+            }
+        }
+
+        var moveAlongPath = function(){
+            for(var i = 0; i < tailList.length; i++){
+                var tracePath = tailList[i]['path']
+                var curTail = tailList[i]['tail'] 
+                var curStartPoint = tailList[i]['startPoint']
+                for(var j = 0; j < tracePath.length; j++){
+                    curTail.firstSegment.point = curStartPoint + new Point(tracePath[j][0], tracePath[j][1])
+                    
+                    for(var k = 0; k < 9; k++){
+                        var segment = curTail.segments[k]
+                        var nextSegment = segment.next;
+                        var vector = segment.point - nextSegment.point
+                        vector.length = length;
+                        nextSegment.point = segment.point - vector
+                    }
+                }
+
+                var curFirstPoint = curTail.firstSegment.point
+                moveVector = curFirstPoint - curStartPoint
+                for(var l = 0; l < curTail.segments.length; l++){
+                    curTail.segments[l].point = curTail.segments[l].point - moveVector
+                }
+            }
+        }
+
+        var startPointTest = new Point(1000, 800)
+        var pathTest = new Path({
+            strokeColor: 'red',
+            strokeWidth: 2,
+            strokeCap: 'round'
+        })
+        pathTest.add(startPointTest)
+        for(var g = 0; g < tailPath.length; g++){
+            pathTest.add(startPointTest + new Point(tailPath[g][0], tailPath[g][1]))
+        }
+        
+        
+        drawTail()
+        drawOriginTail()
+        moveAlongPath()
+        console.log('taillist', tailList)
+
+    </script>
+    
+    <canvas id = "mycanvas" width = "1400" height="1400">
+    </canvas>
+
+</body>
+</html>
